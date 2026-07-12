@@ -1,0 +1,5 @@
+.DS_Store
+
+# herdr runtime state (local to this machine, not config)
+home/.config/herdr/*.log
+home/.config/herdr/session.json
