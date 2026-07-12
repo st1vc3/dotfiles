@@ -5,7 +5,25 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-echo "==> Step 1: Determinate Nix"
+echo "==> Step 1: Xcode Command Line Tools"
+# Homebrew (bootstrapped later by nix-homebrew) needs git/clang from the CLT.
+# Without this check, that need surfaces mid-way through the sudo darwin-rebuild
+# switch call in Step 5, as a GUI installer popup buried inside Homebrew's own
+# install script - confusing on a first-time reinstall. Check for it up front
+# instead, so the prompt (if any) happens here with context.
+if xcode-select -p >/dev/null 2>&1; then
+  echo "    already installed, skipping"
+else
+  echo "    not found, triggering the installer (a GUI dialog will appear - click Install)"
+  xcode-select --install
+  echo "    waiting for the installation to finish..."
+  until xcode-select -p >/dev/null 2>&1; do
+    sleep 5
+  done
+  echo "    done"
+fi
+
+echo "==> Step 2: Determinate Nix"
 if command -v nix >/dev/null 2>&1; then
   echo "    nix already installed, skipping"
 else
@@ -15,12 +33,12 @@ else
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 fi
 
-echo "==> Step 2: symlink this repo to ~/.dotfiles"
+echo "==> Step 3: symlink this repo to ~/.dotfiles"
 # home.nix resolves its mkOutOfStoreSymlink paths through ~/.dotfiles, so this
 # has to exist before the first switch or the build will fail to find them.
 ln -sfn "$DIR" ~/.dotfiles
 
-echo "==> Step 3: personalize the configured username"
+echo "==> Step 4: personalize the configured username"
 # Do this before any sudo call: sudo resets $USER to root, so whoami has to
 # run as the real interactive user first.
 REAL_USER="$(whoami)"
@@ -43,7 +61,7 @@ else
   echo "    flake.nix already matches \"$REAL_USER\", nothing to do."
 fi
 
-echo "==> Step 4: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
+echo "==> Step 5: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
 # darwin-rebuild doesn't exist yet on a fresh machine, so run it straight
 # from the flake this once. After this, rebuild.sh works normally.
 # This fetches the darwin-rebuild tool from the nix-darwin-26.05 release branch,
