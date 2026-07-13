@@ -1,4 +1,4 @@
-{ user, ... }:
+{ user, wallpaper, ... }:
 
 {
   # Determinate already manages the Nix daemon, so nix-darwin shouldn't.
@@ -77,6 +77,7 @@
       "telegram"
       "whatsapp"
       "font-hack-nerd-font"
+      "desktoppr"
     ];
     # Mac App Store apps (mas) can't be automated here: darwin-rebuild runs
     # `brew bundle` under sudo during activation, but mas needs the logged-in
@@ -84,4 +85,13 @@
     # Known upstream issue, no fix available - install these manually instead:
     #   mas install 1451685025   # WireGuard
   };
+
+  # All nix-darwin activation runs as root, so desktoppr (which sets a
+  # per-user desktop picture) has to be handed off to the logged-in user's
+  # session via launchctl asuser. Runs after the homebrew block above, so
+  # desktoppr is already installed by the time this executes.
+  system.activationScripts.postActivation.text = ''
+    uid=$(id -u ${user})
+    launchctl asuser "$uid" sudo -u ${user} /usr/local/bin/desktoppr "${wallpaper}/abstract/red.png"
+  '';
 }

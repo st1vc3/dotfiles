@@ -121,7 +121,24 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "wallpaper": "wallpaper"
+      }
+    },
+    "wallpaper": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783940248,
+        "narHash": "sha256-UDRizQ8ZHFDVYWI5dMei8X1l0U42oNxfbg5VYUdaxXQ=",
+        "ref": "refs/heads/main",
+        "rev": "4407fdaf3b5f60a9d2a21aa6d558987000333449",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/st1vc3/wallpaper.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/st1vc3/wallpaper.git"
       }
     }
   },
