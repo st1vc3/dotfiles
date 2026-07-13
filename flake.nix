@@ -16,9 +16,14 @@
     # Prebuilt Firefox-compatible browser extensions (used to side-load into Zen).
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
     firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Wallpaper images. Private repo, so fetched over SSH using the same key
+    # already used to push this repo - no separate Nix access-token setup needed.
+    wallpaper.url = "git+ssh://git@github.com/st1vc3/wallpaper.git";
+    wallpaper.flake = false;
   };
 
-  outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons }:
+  outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, wallpaper }:
     let
       # The one username line to change if this isn't your machine.
       # bootstrap.sh offers to rewrite this for you if your macOS username differs.
@@ -26,7 +31,7 @@
     in
     {
       darwinConfigurations."mac" = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit user; };
+        specialArgs = { inherit user wallpaper; };
         modules = [
           ./configuration.nix
           nix-homebrew.darwinModules.nix-homebrew
