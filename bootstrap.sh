@@ -27,6 +27,19 @@ echo "==> Step 2: Determinate Nix"
 if command -v nix >/dev/null 2>&1; then
   echo "    nix already installed, skipping"
 else
+  # A previous failed/partial Determinate install can leave an un-mounted
+  # "Nix Store" APFS volume behind. On a reinstall the installer tries to
+  # create a new one, collides with the stale volume, and dies with
+  # "Read-only file system" / "Volume ... failed to mount" - which is exactly
+  # the "failing again" loop. A working install mounts the volume at /nix, so
+  # any un-mounted "Nix Store" volume is always stale and safe to delete.
+  for vol in $(diskutil list 2>/dev/null | awk '/Nix Store/ {print $NF}'); do
+    mp="$(diskutil info "$vol" 2>/dev/null | sed -nE 's/.*Mount Point:[[:space:]]*//p')"
+    if [ -z "$mp" ] || [ "$mp" = "Not Mounted" ]; then
+      echo "    removing stale un-mounted 'Nix Store' volume $vol"
+      sudo diskutil apfs deleteVolume "$vol" >/dev/null 2>&1 || true
+    fi
+  done
   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
     | sh -s -- install --no-confirm
   # shellcheck disable=SC1091
