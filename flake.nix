@@ -39,6 +39,9 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            # On a fresh machine some target files (e.g. ~/.zshrc) already
+            # exist; back them up instead of aborting the activation.
+            home-manager.backupFileExtension = "backup";
             home-manager.extraSpecialArgs = { inherit user firefox-addons; };
             home-manager.users.${user} = import ./home.nix;
           }
