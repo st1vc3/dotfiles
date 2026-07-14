@@ -61,16 +61,27 @@ else
   echo "    flake.nix already matches \"$REAL_USER\", nothing to do."
 fi
 
-echo "==> Step 5: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
+# sudo resets PATH to a secure default that excludes /nix/.../bin, so a
+# freshly installed `nix` would not be found under sudo even though it's
+# on PATH here. Resolve the absolute path first and invoke that instead.
+NIX_BIN="$(command -v nix)"
+
+echo "==> Step 5: pre-fetch flake inputs as $REAL_USER"
+# The wallpaper input is fetched over SSH with this user's key. Step 6 runs
+# under sudo, and root's ssh looks in /var/root/.ssh - no GitHub host key,
+# no identity - so the fetch would fail there. Fetch every input as the real
+# user now; the locked inputs land in the store and root never touches SSH.
+# accept-new: a fresh machine has no known_hosts yet, and this fetch runs
+# non-interactively inside nix where the host-key prompt cannot be answered.
+GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
+  "$NIX_BIN" flake archive ~/.dotfiles
+
+echo "==> Step 6: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
 # darwin-rebuild doesn't exist yet on a fresh machine, so run it straight
 # from the flake this once. After this, rebuild.sh works normally.
 # This fetches the darwin-rebuild tool from the nix-darwin-26.05 release branch,
 # not the exact flake.lock revision. The system config it applies is still pinned
 # by this repo's flake.lock.
-# sudo resets PATH to a secure default that excludes /nix/.../bin, so a
-# freshly installed `nix` would not be found under sudo even though it's
-# on PATH here. Resolve the absolute path first and invoke that instead.
-NIX_BIN="$(command -v nix)"
 # "mac" is the flake host label - if you renamed it, change it in flake.nix
 # and rebuild.sh too.
 sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
