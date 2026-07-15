@@ -124,4 +124,24 @@ sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild
 # If this still fails with "nix: command not found", open a new terminal
 # (Determinate adds nix to new shells' PATH) and re-run ./bootstrap.sh.
 
+echo "==> Step 7: Zen browser profile"
+# Zen picks a random profile folder name the first time it launches, so
+# home.nix's activation script (which side-loads uBlock Origin + SponsorBlock
+# by reading that name live out of profiles.ini on every switch) has nothing
+# to find yet on a fresh machine. Launch Zen once here so it creates its
+# profile, then re-run the switch so that activation script picks it up.
+if [ -d "/Applications/Zen.app" ]; then
+  PROFILES_INI="$HOME/Library/Application Support/zen/profiles.ini"
+  if [ ! -f "$PROFILES_INI" ]; then
+    echo "    Zen hasn't been launched yet - opening it now to create its profile."
+    open -a Zen
+    read -r -p "    Once Zen has fully started, quit it completely, then press Enter to continue... " _
+    echo "    Re-running darwin-rebuild switch so the extensions land in the new profile"
+    sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+      switch --flake ~/.dotfiles#mac
+  fi
+else
+  echo "    Zen not installed, skipping"
+fi
+
 echo "==> Done. Use ./rebuild.sh for future changes."
