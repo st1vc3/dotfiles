@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck bootstrap.sh rebuild.sh
+
+  flake:
+    name: flake check + dry-run build
+    # arm64 runner, matching hostPlatform = "aarch64-darwin"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+
+      # The wallpaper input is a private repo fetched over SSH, which CI can't
+      # reach. Evaluation only embeds the input's store path as a string, so a
+      # checked-in stub directory is a faithful stand-in. --no-write-lock-file
+      # because an overridden input can't be recorded in flake.lock anyway.
+      - name: nix flake check
+        run: >
+          nix flake check --no-build --no-write-lock-file
+          --override-input wallpaper path:./.github/wallpaper-stub
+
+      - name: dry-run build of the darwin system
+        run: >
+          nix build .#darwinConfigurations.mac.system --dry-run --no-write-lock-file
+          --override-input wallpaper path:./.github/wallpaper-stub
