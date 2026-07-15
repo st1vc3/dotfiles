@@ -5,6 +5,17 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
+echo "==> Requesting sudo access up front"
+# Several later steps need sudo (the stale-volume cleanup, Determinate's own
+# installer, the final darwin-rebuild switch), and sudo's credential cache
+# normally lapses after 5 idle minutes - easily eaten by the CLT-install wait
+# or the flake fetch. Prompt once now, then keep the cache warm in the
+# background so nothing prompts again for the rest of the run.
+sudo -v
+while true; do sudo -n true; sleep 60; done 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
+
 echo "==> Step 1: Xcode Command Line Tools"
 # Homebrew (bootstrapped later by nix-homebrew) needs git/clang from the CLT.
 # Without this check, that need surfaces mid-way through the sudo darwin-rebuild
