@@ -70,6 +70,9 @@ nix build .#darwinConfigurations.mac.system --dry-run
 
 If you renamed the host label in "Make it yours", substitute your label for `mac` in these commands.
 
+CI runs these same checks (plus shellcheck on the scripts) on every push to `main` - see `.github/workflows/ci.yml`.
+Since CI can't reach the private wallpaper repo, the workflow substitutes the stub in `.github/wallpaper-stub/` for that input.
+
 ## Daily use
 
 Edit the config files in place, then apply:
