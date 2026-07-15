@@ -30,6 +30,7 @@
     ];
     finder.FXPreferredViewStyle = "Nlsv";  # list view by default
     finder.CreateDesktop = false;          # clean desktop
+    finder.NewWindowTarget = "Home";       # new windows open in the home dir
     trackpad.Clicking = true;              # tap to click
   };
   nix-homebrew = {
