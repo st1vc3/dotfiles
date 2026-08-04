@@ -14,7 +14,9 @@ echo "==> Requesting sudo access up front"
 sudo -v
 while true; do sudo -n true; sleep 60; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
-trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
+# Kill the loop's current sleep child before the loop shell itself, or the
+# sleep gets orphaned and lingers for up to a minute after the script exits.
+trap 'pkill -P "$SUDO_KEEPALIVE_PID" 2>/dev/null; kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
 
 echo "==> Step 1: Xcode Command Line Tools"
 # Homebrew (bootstrapped later by nix-homebrew) needs git/clang from the CLT.
@@ -35,8 +37,17 @@ else
 fi
 
 echo "==> Step 2: Determinate Nix"
+# `command -v nix` alone misses an installed nix that just isn't on this
+# shell's PATH yet (Determinate only adds it to new shells' profiles), which
+# would wrongly re-run the installer. Check for the daemon profile script too
+# and source it instead of reinstalling.
+NIX_PROFILE_SH=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 if command -v nix >/dev/null 2>&1; then
   echo "    nix already installed, skipping"
+elif [ -e "$NIX_PROFILE_SH" ]; then
+  echo "    nix already installed but not on this shell's PATH, loading it"
+  # shellcheck disable=SC1090
+  . "$NIX_PROFILE_SH"
 else
   # A previous failed/partial Determinate install can leave an un-mounted
   # "Nix Store" APFS volume behind. On a reinstall the installer tries to
@@ -53,8 +64,8 @@ else
   done
   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
     | sh -s -- install --no-confirm
-  # shellcheck disable=SC1091
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+  # shellcheck disable=SC1090
+  . "$NIX_PROFILE_SH"
 fi
 
 echo "==> Step 3: symlink this repo to ~/.dotfiles"
