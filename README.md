@@ -112,7 +112,7 @@ skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and t
 | left Opt+1..4/B/C | switch workspace |
 | left Opt+Shift+1..4/B/C | move window to workspace |
 | left Opt+Tab | previous workspace |
-| left Opt+F | toggle floating |
+| left Opt+F | toggle focused window fullscreen |
 | left Opt+R | flatten layout |
 | Ctrl+left Opt+H/J/K/L | join with neighbour |
 | Ctrl+left Opt+Backspace | close all windows but current |

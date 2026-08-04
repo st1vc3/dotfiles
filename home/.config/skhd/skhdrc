@@ -51,7 +51,7 @@ lalt - 0x18 : /opt/homebrew/bin/aerospace resize smart +50
 
 # Replacements for the old AeroSpace "service mode" commands.
 # reload-config needs no binding: aerospace.toml sets auto-reload-config.
-lalt - f : /opt/homebrew/bin/aerospace layout floating tiling
+lalt - f : /opt/homebrew/bin/aerospace fullscreen
 lalt - r : /opt/homebrew/bin/aerospace flatten-workspace-tree
 # ctrl is added here so plain left Option+Backspace keeps deleting words.
 ctrl + lalt - backspace : /opt/homebrew/bin/aerospace close-all-windows-but-current
