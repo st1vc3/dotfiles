@@ -1,4 +1,4 @@
-# dotfiles
+# macosx
 
 Watch the walkthrough: https://youtu.be/5N-okeDdIuI
 
@@ -8,8 +8,8 @@ One repo, one command, and a fresh Mac ends up configured the same way every tim
 ## Contributing / Using This Repo
 
 These are my personal dotfiles, shared publicly so people can read them, learn from them, and fork them freely.
-Feature requests and pull requests are not accepted here, and PRs are auto-closed.
-If you find a bug, please open a GitHub Issue using the bug report template.
+Feature requests and pull requests aren't accepted here - fork it and make it yours instead.
+If you hit a genuine bug, feel free to open a GitHub Issue.
 
 ## What you get
 
@@ -36,7 +36,7 @@ On a brand new Mac, from a bare clone of this repo:
 
 ```sh
 git clone https://github.com/st1vc3/macosx.git
-cd dotfiles
+cd macosx
 ```
 
 On a truly blank Mac, this `git clone` may itself pop up the "install Command Line Developer Tools" dialog, since `git` is a CLT shim. Click Install and wait for it to finish before continuing - `bootstrap.sh` also checks for this later, but the earliest trigger point is whichever command you run first.
@@ -168,6 +168,7 @@ If you don't use it, just remove it from `brews` in your copy.
   Wires up nixpkgs, nix-darwin, home-manager, and nix-homebrew, and declares the `mac` machine.
 - `configuration.nix` - system-level config: macOS defaults, Homebrew.
 - `home.nix` - user-level config: shell, packages, prompt, and the symlinks described below.
+- `bootstrap.sh` - one-time setup for a fresh Mac: installs the Command Line Tools and Nix, then runs the first switch (see "Fresh-machine setup" above).
 - `rebuild.sh` - re-applies the config after the first switch.
   Run this every time you make a change.
 - `check-skhd.sh` - verifies skhd is actually running and walks through its Accessibility grant.
