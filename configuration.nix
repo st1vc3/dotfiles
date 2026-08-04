@@ -79,6 +79,7 @@
     casks = [
       "kitty"
       "claude-code"
+      "codex"
       "zen"
       "helium-browser"
       "transmission"
