@@ -6,24 +6,12 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 echo "==> Requesting sudo access up front"
-# Several later steps need sudo (the stale-volume cleanup, Determinate's own
-# installer, the final darwin-rebuild switch), and sudo's credential cache
-# normally lapses after 5 idle minutes - easily eaten by the CLT-install wait
-# or the flake fetch. Prompt once now, then keep the cache warm in the
-# background so nothing prompts again for the rest of the run.
 sudo -v
 while true; do sudo -n true; sleep 60; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
-# Kill the loop's current sleep child before the loop shell itself, or the
-# sleep gets orphaned and lingers for up to a minute after the script exits.
 trap 'pkill -P "$SUDO_KEEPALIVE_PID" 2>/dev/null; kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
 
 echo "==> Step 1: Xcode Command Line Tools"
-# Homebrew (bootstrapped later by nix-homebrew) needs git/clang from the CLT.
-# Without this check, that need surfaces mid-way through the sudo darwin-rebuild
-# switch call in Step 5, as a GUI installer popup buried inside Homebrew's own
-# install script - confusing on a first-time reinstall. Check for it up front
-# instead, so the prompt (if any) happens here with context.
 if xcode-select -p >/dev/null 2>&1; then
   echo "    already installed, skipping"
 else
@@ -37,10 +25,6 @@ else
 fi
 
 echo "==> Step 2: Determinate Nix"
-# `command -v nix` alone misses an installed nix that just isn't on this
-# shell's PATH yet (Determinate only adds it to new shells' profiles), which
-# would wrongly re-run the installer. Check for the daemon profile script too
-# and source it instead of reinstalling.
 NIX_PROFILE_SH=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 if command -v nix >/dev/null 2>&1; then
   echo "    nix already installed, skipping"
@@ -49,12 +33,6 @@ elif [ -e "$NIX_PROFILE_SH" ]; then
   # shellcheck disable=SC1090
   . "$NIX_PROFILE_SH"
 else
-  # A previous failed/partial Determinate install can leave an un-mounted
-  # "Nix Store" APFS volume behind. On a reinstall the installer tries to
-  # create a new one, collides with the stale volume, and dies with
-  # "Read-only file system" / "Volume ... failed to mount" - which is exactly
-  # the "failing again" loop. A working install mounts the volume at /nix, so
-  # any un-mounted "Nix Store" volume is always stale and safe to delete.
   for vol in $(diskutil list 2>/dev/null | awk '/Nix Store/ {print $NF}'); do
     mp="$(diskutil info "$vol" 2>/dev/null | sed -nE 's/.*Mount Point:[[:space:]]*//p')"
     if [ -z "$mp" ] || [ "$mp" = "Not Mounted" ]; then
@@ -69,13 +47,9 @@ else
 fi
 
 echo "==> Step 3: symlink this repo to ~/.dotfiles"
-# home.nix resolves its mkOutOfStoreSymlink paths through ~/.dotfiles, so this
-# has to exist before the first switch or the build will fail to find them.
 ln -sfn "$DIR" ~/.dotfiles
 
 echo "==> Step 4: personalize the configured username"
-# Do this before any sudo call: sudo resets $USER to root, so whoami has to
-# run as the real interactive user first.
 REAL_USER="$(whoami)"
 FLAKE_USER="$(sed -nE 's/^[[:space:]]*user = "([^"]+)";.*/\1/p' "$DIR/flake.nix" | head -n1)"
 if [ -z "$FLAKE_USER" ]; then
@@ -96,40 +70,17 @@ else
   echo "    flake.nix already matches \"$REAL_USER\", nothing to do."
 fi
 
-# sudo resets PATH to a secure default that excludes /nix/.../bin, so a
-# freshly installed `nix` would not be found under sudo even though it's
-# on PATH here. Resolve the absolute path first and invoke that instead.
 NIX_BIN="$(command -v nix)"
 
 echo "==> Step 5: pre-fetch flake inputs as $REAL_USER"
-# The wallpaper input is fetched over SSH with this user's key. Step 6 runs
-# under sudo, and root's ssh looks in /var/root/.ssh - no GitHub host key,
-# no identity - so the fetch would fail there. Fetch every input as the real
-# user now; the locked inputs land in the store and root never touches SSH.
-# accept-new: a fresh machine has no known_hosts yet, and this fetch runs
-# non-interactively inside nix where the host-key prompt cannot be answered.
 GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
   "$NIX_BIN" flake archive ~/.dotfiles
 
 echo "==> Step 6: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
-# darwin-rebuild doesn't exist yet on a fresh machine, so run it straight
-# from the flake this once. After this, rebuild.sh works normally.
-# This fetches the darwin-rebuild tool from the nix-darwin-26.05 release branch,
-# not the exact flake.lock revision. The system config it applies is still pinned
-# by this repo's flake.lock.
-# "mac" is the flake host label - if you renamed it, change it in flake.nix
-# and rebuild.sh too.
 sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
   switch --flake ~/.dotfiles#mac
-# If this still fails with "nix: command not found", open a new terminal
-# (Determinate adds nix to new shells' PATH) and re-run ./bootstrap.sh.
 
 echo "==> Step 7: Zen browser profile"
-# Zen picks a random profile folder name the first time it launches, so
-# home.nix's activation script (which side-loads uBlock Origin + SponsorBlock
-# by reading that name live out of profiles.ini on every switch) has nothing
-# to find yet on a fresh machine. Launch Zen once here so it creates its
-# profile, then re-run the switch so that activation script picks it up.
 if [ -d "/Applications/Zen.app" ]; then
   PROFILES_INI="$HOME/Library/Application Support/zen/profiles.ini"
   if [ ! -f "$PROFILES_INI" ]; then
