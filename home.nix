@@ -145,7 +145,7 @@ in
 
   # Reload Übersicht on rebuild so managed settings reach its long-lived WebView.
   home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/MacOS/.*bersicht$' || true
+    /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/' || true
     /bin/sleep 1
     /usr/bin/open -gj -b tracesOf.Uebersicht
     /bin/sleep 2
