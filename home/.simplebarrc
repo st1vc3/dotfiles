@@ -39,5 +39,8 @@
     "spotifyWidget": false,
     "musicWidget": false,
     "browserTrackWidget": false
+  },
+  "customStyles": {
+    "styles": ":root { --bar-height: 32px; } .simple-bar { background-color: color-mix(in srgb, var(--background) 80%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }"
   }
 }
