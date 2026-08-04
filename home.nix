@@ -143,6 +143,15 @@ in
       };
     };
 
+  # Reload Übersicht on rebuild so managed settings reach its long-lived WebView.
+  home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/MacOS/.*bersicht$' || true
+    /bin/sleep 1
+    /usr/bin/open -gj -b tracesOf.Uebersicht
+    /bin/sleep 2
+    /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' || true
+  '';
+
   # Start Übersicht once per login, then refresh Simple Bar after its external
   # configuration has loaded. Übersicht remains running after the shell exits.
   launchd.agents.uebersicht = {
