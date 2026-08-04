@@ -81,12 +81,13 @@ key-mapping.preset = 'qwerty'
 #                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
-gaps.inner.horizontal = 0
-gaps.inner.vertical =   0
-gaps.outer.left =       0
-gaps.outer.bottom =     0
-gaps.outer.top =        32
-gaps.outer.right =      0
+# Match mac.config spacing.
+gaps.inner.horizontal = 10
+gaps.inner.vertical =   1
+gaps.outer.left =       10
+gaps.outer.bottom =     10
+gaps.outer.top =        10
+gaps.outer.right =      10
 
 # App placement rules
 # See: https://nikitabobko.github.io/AeroSpace/guide#callbacks
