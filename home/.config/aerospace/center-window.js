@@ -1,9 +1,11 @@
 ObjC.import("AppKit");
 
 function run(arguments) {
-  const processName = arguments[0];
+  const processSelector = arguments[0];
   const systemEvents = Application("System Events");
-  const process = systemEvents.processes.byName(processName);
+  const process = /^\d+$/.test(processSelector)
+    ? systemEvents.processes.whose({ unixId: Number(processSelector) })[0]
+    : systemEvents.processes.byName(processSelector);
 
   for (let attempt = 0; attempt < 20; attempt += 1) {
     if (process.exists() && process.windows.length > 0) {
