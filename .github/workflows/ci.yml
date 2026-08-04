@@ -13,7 +13,7 @@ jobs:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: shellcheck bootstrap.sh rebuild.sh check-skhd.sh
 
   flake:
@@ -21,8 +21,8 @@ jobs:
     # arm64 runner, matching hostPlatform = "aarch64-darwin"
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
 
       # The wallpaper input is a private repo fetched over SSH, which CI can't
       # reach. Evaluation only embeds the input's store path as a string, so a
