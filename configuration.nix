@@ -61,11 +61,19 @@
       "fastfetch"
       "shellcheck"
       "mas"
+      "colima"
+      "docker"
+      "sshpass"
+      "wget"
+      "wireguard-tools"  # `wg` / `wg-quick` CLI (replaces the App Store GUI)
     ];
     casks = [
       "kitty"
       "claude-code"
       "zen"
+      "helium-browser"
+      "transmission"
+      "vlc"
       "lulu"
       "appcleaner"
       "hiddenbar"
