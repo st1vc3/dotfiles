@@ -60,7 +60,7 @@ automatically-unhide-macos-hidden-apps = false
 # even when they are invisible.
 # This config option is only available since 'config-version = 2'
 # Fallback value (if you omit the key): persistent-workspaces = []
-persistent-workspaces = ["1", "2", "3", "4", "B", "C"]
+persistent-workspaces = ["1", "2", "3", "4", "B", "C", "F"]
 
 # A callback that runs every time binding mode changes
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -126,6 +126,10 @@ run = ['layout tiling', 'move-node-to-workspace C']
 [[on-window-detected]]
 if.app-id = 'net.whatsapp.WhatsApp'
 run = ['layout tiling', 'move-node-to-workspace C']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'move-node-to-workspace F'
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes

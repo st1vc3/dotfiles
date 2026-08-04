@@ -281,6 +281,17 @@ in
 
   home.file.".config/aerospace".source = liveLink "home/.config/aerospace";
 
+  # Same class of bug as skhd below: aerospace.toml is an out-of-store symlink,
+  # and auto-reload-config tracks it by inode, which git/home-manager rewrite
+  # on every checkout or rebuild. Without this, AeroSpace can run for weeks on
+  # a stale ruleset (window-placement rules silently stop firing) until it's
+  # quit and relaunched by hand.
+  home.activation.reloadAerospace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if /usr/bin/pgrep -x AeroSpace >/dev/null 2>&1; then
+      $DRY_RUN_CMD /opt/homebrew/bin/aerospace reload-config || true
+    fi
+  '';
+
   home.file.".config/skhd".source = liveLink "home/.config/skhd";
 
   # skhd runs as a nix-darwin launchd agent, but its config is an out-of-store
