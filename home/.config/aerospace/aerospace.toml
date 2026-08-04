@@ -119,6 +119,12 @@ run = ['layout tiling', 'move-node-to-workspace C']
 if.app-id = 'net.whatsapp.WhatsApp'
 run = ['layout tiling', 'move-node-to-workspace C']
 
+# AeroSpace identifies ordinary Save/Open panels and other dialogs as floating.
+# Center those windows without relying on localized or application-specific titles.
+[[on-window-detected]]
+if = 'test %{window-layout} = floating'
+run = 'exec-and-forget /usr/bin/osascript -l JavaScript "$HOME/.config/aerospace/center-window.js" "%{app-pid}"'
+
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
