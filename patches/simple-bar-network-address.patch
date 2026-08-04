@@ -1,0 +1,47 @@
+diff --git a/lib/components/data/wifi.jsx b/lib/components/data/wifi.jsx
+index 8fb93cf..5a752e7 100644
+--- a/lib/components/data/wifi.jsx
++++ b/lib/components/data/wifi.jsx
+@@ -55,7 +55,7 @@ export const Widget = React.memo(() => {
+    */
+   const getWifi = React.useCallback(async () => {
+     if (!visible) return;
+-    const [status, ssid] = await Promise.all([
++    const [status, ssid, ipAddress] = await Promise.all([
+       Utils.cachedRun(
+         `ifconfig ${networkDevice} | grep status | cut -c 10-`,
+         refresh,
+@@ -64,10 +64,12 @@ export const Widget = React.memo(() => {
+         `system_profiler SPAirPortDataType | awk '/Current Network/ {getline;$1=$1;print $0 | "tr -d ':'";exit}'`,
+         refresh,
+       ),
++      Utils.cachedRun(`ipconfig getifaddr ${networkDevice} 2>/dev/null`, refresh),
+     ]);
+     setState({
+       status: Utils.cleanupOutput(status),
+       ssid: Utils.cleanupOutput(ssid),
++      ipAddress: Utils.cleanupOutput(ipAddress),
+     });
+     setLoading(false);
+   }, [networkDevice, visible, refresh]);
+@@ -78,9 +80,10 @@ export const Widget = React.memo(() => {
+   if (loading) return <DataWidgetLoader.Widget className="wifi" />;
+   if (!state) return null;
+ 
+-  const { status, ssid } = state;
++  const { status, ssid, ipAddress } = state;
+   const isActive = status === "active";
+-  const name = renderName(ssid, hideNetworkName);
++  const networkName = ssid === "<redacted>" ? "Wi-Fi" : renderName(ssid, hideNetworkName);
++  const name = [networkName, ipAddress].filter(Boolean).join(" · ");
+ 
+   if (hideWifiIfDisabled && !isActive) return null;
+ 
+@@ -106,6 +109,6 @@ export const Widget = React.memo(() => {
+       classes={classes}
+       Icon={showIcon ? Icon : null}
+-      onClick={toggleWifiOnClick ? onClick : undefined}
++      onClick={toggleWifiOnClick ? onClick : openWifiPreferences}
+       onRightClick={openWifiPreferences}
+     >
+       {name}

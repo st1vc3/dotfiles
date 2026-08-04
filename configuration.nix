@@ -69,7 +69,6 @@
       "neovim"
       "fastfetch"
       "shellcheck"
-      "mas"
       "colima"
       "docker"
       "sshpass"

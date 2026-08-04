@@ -178,7 +178,7 @@ If you don't use it, just remove it from `brews` in your copy.
 - `flake.nix` - the entry point.
   Wires up nixpkgs, nix-darwin, home-manager, and nix-homebrew, and declares the `mac` machine.
 - `configuration.nix` - system-level config: macOS defaults, Homebrew.
-- `home.nix` - user-level config: shell, packages, prompt, and the symlinks described below.
+- `home.nix` - user-level entry point, composed from the focused modules under `modules/home/`.
 - `bootstrap.sh` - one-time setup for a fresh Mac: installs the Command Line Tools and Nix, then runs the first switch (see "Fresh-machine setup" above).
 - `rebuild.sh` - re-applies the config after the first switch.
   Run this every time you make a change.

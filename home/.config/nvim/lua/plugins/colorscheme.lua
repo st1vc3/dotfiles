@@ -5,15 +5,17 @@ return {
     priority = 1000,
     name = 'rose-pine',
     config = function()
+      local uname = vim.uv.os_uname()
+
       require('rose-pine').setup({
         dark_variant = 'moon',
         dim_inactive_windows = false,
         extend_background_behind_borders = false,
         styles = {
           italic = false,
-          transparency = vim.uv.os_uname().sysname == 'Darwin'
-            or string.find(vim.uv.os_uname().sysname, 'Windows') ~= nil
-            or string.find(vim.uv.os_uname().release, 'WSL') ~= nil,
+          transparency = uname.sysname == 'Darwin'
+            or string.find(uname.sysname, 'Windows') ~= nil
+            or string.find(uname.release, 'WSL') ~= nil,
         },
       })
 

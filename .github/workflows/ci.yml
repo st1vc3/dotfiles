@@ -72,6 +72,7 @@ jobs:
 
       - name: verify repository invariants
         run: |
+          git check-ignore --no-index .no-mistakes/example
           test "$(git ls-files 'home/.config/herdr/*')" = "home/.config/herdr/config.toml"
           git check-ignore --no-index \
             home/.config/herdr/example.log \

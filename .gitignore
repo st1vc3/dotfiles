@@ -1,4 +1,5 @@
 .DS_Store
+.no-mistakes/
 
 # herdr runtime state (local to this machine, not config)
 home/.config/herdr/*.log
