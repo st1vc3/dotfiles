@@ -14,10 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - run: shellcheck bootstrap.sh rebuild.sh check-skhd.sh
+      - name: validate shell scripts
+        run: |
+          shellcheck bootstrap.sh rebuild.sh check-skhd.sh
+          bash -n bootstrap.sh rebuild.sh check-skhd.sh
 
   flake:
-    name: flake check + dry-run build
+    name: configuration + full build
     # arm64 runner, matching hostPlatform = "aarch64-darwin"
     runs-on: macos-latest
     steps:
@@ -33,7 +36,46 @@ jobs:
           nix flake check --no-build --no-write-lock-file
           --override-input wallpaper path:./.github/wallpaper-stub
 
-      - name: dry-run build of the darwin system
+      - name: build the darwin system
         run: >
-          nix build .#darwinConfigurations.mac.system --dry-run --no-write-lock-file
+          nix build .#darwinConfigurations.mac.system --no-link --no-write-lock-file
           --override-input wallpaper path:./.github/wallpaper-stub
+
+      - name: validate configuration files
+        run: |
+          nix develop .#ci --no-write-lock-file \
+            --override-input wallpaper path:./.github/wallpaper-stub \
+            --command bash -euo pipefail -c '
+              actionlint
+              git ls-files -z "*.json" | xargs -0 jq empty
+              taplo lint home/.config/aerospace/aerospace.toml home/.config/herdr/config.toml
+            '
+
+      - name: start Neovim with the locked plugins
+        env:
+          XDG_CONFIG_HOME: ${{ github.workspace }}/home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/nvim-data
+          XDG_STATE_HOME: ${{ runner.temp }}/nvim-state
+          GIT_CONFIG_GLOBAL: /dev/null
+        run: |
+          if ! nix develop .#ci --no-write-lock-file \
+              --override-input wallpaper path:./.github/wallpaper-stub \
+              --command nvim --headless -i NONE "+Lazy! restore" +qa \
+              >"$RUNNER_TEMP/nvim-install.log" 2>&1; then
+            cat "$RUNNER_TEMP/nvim-install.log"
+            exit 1
+          fi
+          nix develop .#ci --no-write-lock-file \
+            --override-input wallpaper path:./.github/wallpaper-stub \
+            --command nvim --headless -i NONE +qa
+
+      - name: verify repository invariants
+        run: |
+          test "$(git ls-files 'home/.config/herdr/*')" = "home/.config/herdr/config.toml"
+          git check-ignore --no-index \
+            home/.config/herdr/example.log \
+            home/.config/herdr/example.sock \
+            home/.config/herdr/session.json \
+            home/.config/herdr/.plugins.lock \
+            home/.config/herdr/release-notes.json
+          git diff --exit-code

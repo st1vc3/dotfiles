@@ -26,6 +26,8 @@
   outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, wallpaper }:
     let
       user = "stivce";
+      system = "aarch64-darwin";
+      pkgs = nixpkgs.legacyPackages.${system};
     in
     {
       darwinConfigurations."mac" = nix-darwin.lib.darwinSystem {
@@ -41,6 +43,15 @@
             home-manager.extraSpecialArgs = { inherit user firefox-addons; };
             home-manager.users.${user} = import ./home.nix;
           }
+        ];
+      };
+
+      devShells.${system}.ci = pkgs.mkShell {
+        packages = with pkgs; [
+          actionlint
+          jq
+          neovim
+          taplo
         ];
       };
     };
