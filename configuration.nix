@@ -62,6 +62,9 @@
       "gh"
       "fd"
       "fzf"
+      "eza"      # ls replacement (aliased ls/ll/la/tree)
+      "bat"      # cat replacement + fzf/man pager
+      "zoxide"   # smart `cd` / directory jumping
       "jq"
       "neovim"
       "fastfetch"
