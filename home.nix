@@ -15,7 +15,8 @@ let
     substituteInPlace $wifi \
       --replace-fail 'const [status, ssid] = await Promise.all([' 'const [status, ssid, ipAddress] = await Promise.all([' \
       --replace-fail '  const { status, ssid } = state;' '  const { status, ssid, ipAddress } = state;' \
-      --replace-fail '  const name = renderName(ssid, hideNetworkName);' '  const networkName = ssid === "<redacted>" ? "Wi-Fi" : renderName(ssid, hideNetworkName);'
+      --replace-fail '  const name = renderName(ssid, hideNetworkName);' '  const networkName = ssid === "<redacted>" ? "Wi-Fi" : renderName(ssid, hideNetworkName);' \
+      --replace-fail '      onClick={toggleWifiOnClick ? onClick : undefined}' '      onClick={toggleWifiOnClick ? onClick : openWifiPreferences}'
     sed -i '/^    ]);/i\      Utils.cachedRun(`ipconfig getifaddr ''${networkDevice} 2>/dev/null`, refresh),' $wifi
     sed -i '/ssid: Utils.cleanupOutput(ssid),/a\      ipAddress: Utils.cleanupOutput(ipAddress),' $wifi
     sed -i '/const networkName =/a\  const name = [networkName, ipAddress].filter(Boolean).join(" · ");' $wifi
