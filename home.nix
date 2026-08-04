@@ -100,6 +100,18 @@ in
   home.file.".config/skhd".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/skhd";
 
+  # skhd runs as a nix-darwin launchd agent, but its config is an out-of-store
+  # symlink edited live in the repo. skhd's config watcher tracks the file by
+  # inode, which git rewrites on checkout, so the daemon can silently keep
+  # running a stale config after a rebuild or pull. Kick the service on every
+  # activation so the current skhdrc is always loaded. The Accessibility grant
+  # is tied to skhd's /nix/store path and survives a same-path restart.
+  home.activation.reloadSkhd = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -f "$HOME/Library/LaunchAgents/org.nixos.skhd.plist" ]; then
+      $DRY_RUN_CMD /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.skhd" || true
+    fi
+  '';
+
   home.file.".claude/settings.json".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.claude/settings.json";
 
