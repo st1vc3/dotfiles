@@ -33,6 +33,14 @@
     finder.NewWindowTarget = "Home";       # new windows open in the home dir
     trackpad.Clicking = true;              # tap to click
   };
+  # skhd owns all window-manager hotkeys with LEFT Option (lalt) as the mod
+  # key: AeroSpace cannot tell left/right Option apart, skhd can. The right
+  # Option stays free for German character input (@, brackets, etc.).
+  # With skhdConfig unset, skhd reads ~/.config/skhd/skhdrc, which home.nix
+  # symlinks into this repo - edits there hot-reload without a rebuild.
+  # skhd needs a one-time Accessibility grant on first start
+  # (System Settings -> Privacy & Security -> Accessibility).
+  services.skhd.enable = true;
   nix-homebrew = {
     enable = true;
     inherit user;
