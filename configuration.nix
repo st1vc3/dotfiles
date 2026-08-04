@@ -37,6 +37,10 @@
   nix-homebrew = {
     enable = true;
     inherit user;
+    trust.taps = [
+      "nikitabobko/tap"
+      "FelixKratz/formulae"
+    ];
   };
   homebrew = {
     enable = true;
@@ -45,8 +49,10 @@
     onActivation.extraFlags = [ "--force" ];
     taps = [
       "nikitabobko/tap"
+      "FelixKratz/formulae"
     ];
     brews = [
+      "FelixKratz/formulae/borders"
       "herdr"
       "opencode"
       "ripgrep"
@@ -56,6 +62,9 @@
       "gh"
       "fd"
       "fzf"
+      "eza"      # ls replacement (aliased ls/ll/la/tree)
+      "bat"      # cat replacement + fzf/man pager
+      "zoxide"   # smart `cd` / directory jumping
       "jq"
       "neovim"
       "fastfetch"
@@ -70,6 +79,7 @@
     casks = [
       "kitty"
       "claude-code"
+      "codex"
       "zen"
       "helium-browser"
       "transmission"
