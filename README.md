@@ -20,6 +20,7 @@ Running the switch builds:
 - Shell (zsh, aliases, starship prompt)
 - Editor (Neovim config with the rose-pine moon theme)
 - Agent configs (Claude, Codex, opencode all share one AGENTS.md)
+- Tiling window manager (AeroSpace) with skhd hotkeys, left Option as the mod key
 
 ## Prerequisites
 
@@ -84,6 +85,41 @@ Edit the config files in place, then apply:
 That's it.
 No separate build-and-copy step.
 
+## Window management and hotkeys
+
+AeroSpace tiles the windows, but binds no keys itself.
+All hotkeys live in skhd (`home/.config/skhd/skhdrc`), which calls the `aerospace` CLI.
+
+Why the split: this is a German (ISO) keyboard, where Option types essential characters (`@` via Option+L, brackets via Option+5..9, `€`, `~`).
+AeroSpace cannot tell the two Option keys apart, so binding `alt` anything swallows those characters.
+skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and the RIGHT Option keeps typing characters.
+
+| Keys | Action |
+| --- | --- |
+| left Opt+Return | new kitty window on workspace 1 |
+| left Opt+Shift+Return | kitty running herdr on workspace 1 |
+| left Opt+S | workspace B, launch/focus Zen |
+| left Opt+H/J/K/L | focus window left/down/up/right |
+| left Opt+Shift+H/J/K/L | move window |
+| left Opt+1..4/B/C | switch workspace |
+| left Opt+Shift+1..4/B/C | move window to workspace |
+| left Opt+Tab | previous workspace |
+| left Opt+F | toggle floating |
+| left Opt+R | flatten layout |
+| Ctrl+left Opt+H/J/K/L | join with neighbour |
+| Ctrl+left Opt+Backspace | close all windows but current |
+
+Window rules pin kitty to workspace 1 and Zen/Safari to workspace B (`home/.config/aerospace/aerospace.toml`).
+Both configs hot-reload on save; no rebuild needed for binding tweaks.
+
+If hotkeys ever go deaf while skhd is still running (it can grab a dead event tap when the input stack churns underneath it, e.g. during login or driver changes), restart it:
+
+```sh
+launchctl kickstart -k gui/$UID/org.nixos.skhd
+```
+
+skhd needs a one-time Accessibility grant on first start (System Settings -> Privacy & Security -> Accessibility).
+
 ## Make it yours
 
 This repo is mine.
@@ -135,7 +171,7 @@ If you don't use it, just remove it from `brews` in your copy.
 - `home.nix` - user-level config: shell, packages, prompt, and the symlinks described below.
 - `rebuild.sh` - re-applies the config after the first switch.
   Run this every time you make a change.
-- `home/` - the actual config files that get symlinked into place (Neovim, kitty, herdr, Claude settings, the shared `AGENTS.md`).
+- `home/` - the actual config files that get symlinked into place (Neovim, kitty, AeroSpace, skhd, herdr, Claude settings, the shared `AGENTS.md`).
 
 ## How the symlinks work
 

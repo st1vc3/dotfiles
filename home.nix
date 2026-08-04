@@ -94,6 +94,12 @@ in
   home.file.".config/kitty".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/kitty";
 
+  home.file.".config/aerospace".source =
+    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/aerospace";
+
+  home.file.".config/skhd".source =
+    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/skhd";
+
   home.file.".claude/settings.json".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.claude/settings.json";
 
