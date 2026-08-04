@@ -104,6 +104,14 @@ if.app-id = 'com.apple.Safari'
 run = 'move-node-to-workspace B'
 
 [[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = ['layout floating', 'exec-and-forget /usr/bin/osascript -l JavaScript "$HOME/.config/aerospace/center-window.js" "System Settings"']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.iCal'
+run = ['layout floating', 'exec-and-forget /usr/bin/osascript -l JavaScript "$HOME/.config/aerospace/center-window.js" Calendar']
+
+[[on-window-detected]]
 if.app-id = 'ru.keepcoder.Telegram'
 run = ['layout tiling', 'move-node-to-workspace C']
 

@@ -56,6 +56,6 @@
     "browserTrackWidget": false
   },
   "customStyles": {
-    "styles": ":root { --bar-height: 32px; } .simple-bar { background-color: color-mix(in srgb, var(--background) 60%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }"
+    "styles": ":root { --bar-height: 32px; --bar-radius: 12px; --item-radius: 10px; } .simple-bar { background-color: color-mix(in srgb, var(--background) 60%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); } .time { background-color: var(--blue); } .settings__outer { top: 50% !important; bottom: auto !important; transform: translateY(-50%); border-radius: 16px; }"
   }
 }
