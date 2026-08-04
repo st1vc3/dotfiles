@@ -8,6 +8,19 @@ let
     name = "zen-extensions";
     paths = [ zenAddons.ublock-origin zenAddons.sponsorblock ];
   };
+  simpleBarWithNetworkAddress = pkgs.runCommand "simple-bar-with-network-address" { } ''
+    /bin/cp -R ${simpleBar} $out
+    /bin/chmod -R u+w $out
+    wifi=$out/lib/components/data/wifi.jsx
+    substituteInPlace $wifi \
+      --replace-fail 'const [status, ssid] = await Promise.all([' 'const [status, ssid, ipAddress] = await Promise.all([' \
+      --replace-fail '  const { status, ssid } = state;' '  const { status, ssid, ipAddress } = state;' \
+      --replace-fail '  const name = renderName(ssid, hideNetworkName);' '  const networkName = ssid === "<redacted>" ? "Wi-Fi" : renderName(ssid, hideNetworkName);' \
+      --replace-fail '      onClick={toggleWifiOnClick ? onClick : undefined}' '      onClick={toggleWifiOnClick ? onClick : openWifiPreferences}'
+    sed -i '/^    ]);/i\      Utils.cachedRun(`ipconfig getifaddr ''${networkDevice} 2>/dev/null`, refresh),' $wifi
+    sed -i '/ssid: Utils.cleanupOutput(ssid),/a\      ipAddress: Utils.cleanupOutput(ipAddress),' $wifi
+    sed -i '/const networkName =/a\  const name = [networkName, ipAddress].filter(Boolean).join(" · ");' $wifi
+  '';
   zenUserJs = pkgs.writeText "zen-user.js" ''
     user_pref("extensions.autoDisableScopes", 0);
     // No confirmation dialogs when quitting or closing a window with tabs open.
@@ -29,15 +42,36 @@ in
 
   programs.zsh = {
     enable = true;
-    autosuggestion.enable = true;      # ghost text from history
-    syntaxHighlighting.enable = true;  # commands turn green when valid
-    initContent = ''
-      bindkey '^f' autosuggest-accept
-    '';
+    # Autosuggestions and highlighting are sourced manually in initContent
+    # below (not via the Home Manager modules) so plugin load order matches
+    # the nixos repo exactly - fast-syntax-highlighting must load last so it
+    # wraps every widget. See the plugin block for the full ordering.
+
+    # History matched to the nixos repo: large, shared across sessions, stored
+    # under XDG state, with the same dedup behaviour.
+    history = {
+      size = 100000;
+      save = 100000;
+      path = "${config.xdg.stateHome}/zsh/history";
+      share = true;
+      ignoreDups = true;
+      ignoreSpace = true;
+      expireDuplicatesFirst = true;
+      findNoDups = true;
+    };
+
     shellAliases = {
-      l = "ls --color=auto";
-      ll = "ls -l --color=auto";
-      lll = "ls -lah --color=auto";
+      # App-backed coreutils replacements, aliased identically to the nixos
+      # repo (eza/bat/ripgrep, all installed as Homebrew formulae).
+      ls = "eza --icons";
+      ll = "eza -lh --icons --git";
+      la = "eza -lah --icons --git";
+      tree = "eza --tree --icons";
+      cat = "bat";
+      grep = "rg --color=auto";
+      diff = "diff --color=auto";
+      df = "df -h";
+      vim = "nvim";
 
       ".." = "cd ..";
 
@@ -47,12 +81,116 @@ in
       push = "git push";
       pull = "git pull";
       m = "git switch main";
+
+      # Git shortcuts shared with the nixos repo. -F quits if the log fits one
+      # screen, -X leaves it on screen after quitting.
+      gs = "git status";
+      gd = "git diff";
+      glog = ''PAGER="less -F -X" git log'';
+      gadog = ''PAGER="less -F -X" git log --all --decorate --oneline --graph'';
       cc = "claude --dangerously-skip-permissions";
       co = "codex --full-auto";
+      cx = "codex --dangerously-bypass-approvals-and-sandbox";
       c = "clear";
       zc = "nvim ~/.zshrc";
       zr = "source ~/.zshrc";
     };
+
+    # Mirrors the nixos repo's config/zsh so the shell behaves the same on
+    # both machines. Pinned to the very end (mkOrder 1500) so it runs after
+    # Home Manager's compinit and so fast-syntax-highlighting loads last.
+    initContent = lib.mkOrder 1500 ''
+      # Shell behaviour: type a dir name to cd into it, no bell, natural sort.
+      setopt AUTOCD NOBEEP NUMERIC_GLOB_SORT
+
+      # Home Manager points HISTFILE here; make sure its directory exists.
+      mkdir -p "${config.xdg.stateHome}/zsh"
+
+      # Completion tuned like the nixos repo: arrow-key menu selection and
+      # case-insensitive matching ("doc" completes "Documents"). Runs after
+      # Home Manager's compinit thanks to the mkOrder above.
+      zstyle ':completion:*' menu select
+      zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+
+      # System rebuild helpers, mirroring the nixos repo's names. rebuild runs
+      # the repo's own script (symlink + flake archive + darwin-rebuild switch
+      # + skhd check); rehash afterwards so new binaries resolve immediately.
+      rebuild() {
+        "$HOME/.dotfiles/rebuild.sh" || return
+        rehash
+      }
+      generations() {
+        darwin-rebuild --list-generations
+      }
+      rollback_system() {
+        sudo darwin-rebuild --rollback || return
+        rehash
+      }
+
+      # Smart directory jumping.
+      if (( $+commands[zoxide] )); then
+        eval "$(zoxide init zsh)"
+      fi
+
+      # `cd -` shortcut. shellAliases can't express a bare `-` alias.
+      alias -- -='cd -'
+
+      # Reuse ls completions for eza.
+      compdef eza=ls 2>/dev/null || true
+
+      # Route man pages through bat.
+      if (( $+commands[bat] )); then
+        export MANPAGER="bat -l man -p"
+      fi
+
+      # fzf shell integration (Ctrl-T files, Ctrl-R history). fzf >= 0.48.
+      if (( $+commands[fzf] )); then
+        source <(fzf --zsh)
+      fi
+
+      export FZF_DEFAULT_COMMAND='fd --type f --hidden --strip-cwd-prefix --exclude .git'
+      export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+      export FZF_DEFAULT_OPTS='
+        --height=60%
+        --layout=reverse
+        --border=rounded
+        --prompt="  "
+        --pointer="  "
+        --preview-window=right:65%:wrap:border-left
+      '
+      export _FZF_PREVIEW_CMD='bat --color=always --style=plain,numbers --line-range=:500 -- {}'
+      export FZF_CTRL_T_OPTS="--preview '$_FZF_PREVIEW_CMD'"
+
+      # Ctrl-F: fzf file picker excluding hidden files.
+      _fzf_file_no_hidden() {
+        local result
+        local -a fd_command=(fd --type f --strip-cwd-prefix --exclude .git)
+        result=$("''${fd_command[@]}" | fzf --preview "$_FZF_PREVIEW_CMD") \
+          && LBUFFER+="''${(q)result}"  # Quote the path for safe insertion.
+        zle reset-prompt
+      }
+      zle -N _fzf_file_no_hidden
+
+      # Plugins, sourced in this order so fast-syntax-highlighting wraps every
+      # widget defined above.
+      source "${pkgs.zsh-autosuggestions}/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+      source "${pkgs.zsh-history-substring-search}/share/zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh"
+      source "${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+      source "${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+
+      # zsh-vi-mode rebuilds its keymaps on the first prompt and wipes any
+      # bindkey made earlier - including fzf's Ctrl-R/Ctrl-T - so custom keys
+      # are (re)applied in its documented hook.
+      function zvm_after_init() {
+        bindkey '^[[A' history-substring-search-up
+        bindkey '^[[B' history-substring-search-down
+        bindkey -M vicmd 'k' history-substring-search-up
+        bindkey -M vicmd 'j' history-substring-search-down
+        bindkey '^F' _fzf_file_no_hidden
+        bindkey '^R' fzf-history-widget
+        bindkey '^T' fzf-file-widget
+      }
+    '';
   };
 
   programs.git = {
@@ -75,16 +213,61 @@ in
     };
   };
 
+  # Ported verbatim from the nixos repo's config/zsh/starship.toml so the
+  # prompt is identical on both machines. The os module resolves to the Apple
+  # glyph here and the NixOS glyph there from the same config.
   programs.starship = {
     enable = true;
     settings = {
       add_newline = false;
-      format = "$directory$git_branch$git_status$cmd_duration$line_break$character";
-      character = {
-        success_symbol = "[❯](purple)";
-        error_symbol = "[❯](red)";
+      format = "$directory$os$git_branch$git_status$nodejs$rust$golang$php $character";
+
+      os = {
+        disabled = false;
+        format = "[$symbol](#blue) ";
+        symbols = {
+          NixOS = "󱄅";
+          Ubuntu = "󰕈";
+          Artix = "󰣇";
+          Arch = "󰣇";
+          CachyOS = "󰣇";
+          Macos = "";
+        };
       };
-      cmd_duration.format = "[$duration]($style) ";
+
+      directory = {
+        format = "[$path](cyan) ";
+        truncation_length = 4;
+        truncate_to_repo = true;
+      };
+
+      git_branch = {
+        symbol = "";
+        format = "[$symbol $branch](bold purple) ";
+      };
+
+      git_status = {
+        format = "($ahead_behind$staged$modified$untracked$deleted$conflicted)";
+        ahead = "[⇡$count ](bold cyan)";
+        behind = "[⇣$count ](bold cyan)";
+        diverged = "[⇡$ahead_count⇣$behind_count ](bold cyan)";
+        staged = "[+$count ](bold green)";
+        modified = "[●$count ](bold yellow)";
+        untracked = "[?$count ](bold white)";
+        deleted = "[✘$count ](bold red)";
+        conflicted = "[⚡$count ](bold red)";
+      };
+
+      nodejs = { symbol = ""; format = "[$symbol $version](green) "; };
+      rust = { symbol = ""; format = "[$symbol $version](red) "; };
+      golang = { symbol = ""; format = "[$symbol $version](cyan) "; };
+      php = { symbol = ""; format = "[$symbol $version](purple) "; };
+
+      character = {
+        success_symbol = "[❯](green)";
+        error_symbol = "[❯](red)";
+        vimcmd_symbol = "[❮](blue)";
+      };
     };
   };
 
@@ -97,6 +280,17 @@ in
   home.file.".config/kitty".source = liveLink "home/.config/kitty";
 
   home.file.".config/aerospace".source = liveLink "home/.config/aerospace";
+
+  # Same class of bug as skhd below: aerospace.toml is an out-of-store symlink,
+  # and auto-reload-config tracks it by inode, which git/home-manager rewrite
+  # on every checkout or rebuild. Without this, AeroSpace can run for weeks on
+  # a stale ruleset (window-placement rules silently stop firing) until it's
+  # quit and relaunched by hand.
+  home.activation.reloadAerospace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if /usr/bin/pgrep -x AeroSpace >/dev/null 2>&1; then
+      $DRY_RUN_CMD /opt/homebrew/bin/aerospace reload-config || true
+    fi
+  '';
 
   home.file.".config/skhd".source = liveLink "home/.config/skhd";
 
@@ -112,6 +306,12 @@ in
     fi
   '';
 
+  # screencapture (bound in skhd to cmd+shift+3/4) writes here; create it up
+  # front so a fresh machine doesn't silently fail on the first screenshot.
+  home.activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "$HOME/Pictures/screenshots"
+  '';
+
   home.file.".claude/settings.json".source = liveLink "home/.claude/settings.json";
 
   home.file.".claude/CLAUDE.md".source = liveLink "home/AGENTS.md";
@@ -122,14 +322,74 @@ in
 
   home.file.".simplebarrc".source = ./home/.simplebarrc;
 
-  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBar;
+  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBarWithNetworkAddress;
 
-  # Start Übersicht once per login. It remains responsible for the widget
-  # process after `open` exits.
+  # Hide Übersicht's welcome widget while keeping Simple Bar visible.
+  home.file."Library/Application Support/tracesOf.Uebersicht/WidgetSettings.json".text =
+    builtins.toJSON {
+      "GettingStarted-jsx" = {
+        hidden = true;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+      "simple-bar-index-jsx" = {
+        hidden = false;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+    };
+
+  # Reload Übersicht on rebuild so managed settings reach its long-lived WebView.
+  home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/' || true
+    attempt=0
+    while /usr/bin/pgrep -f '/Applications/.*bersicht.app/Contents/' >/dev/null && [ "$attempt" -lt 10 ]; do
+      /bin/sleep 1
+      attempt=$((attempt + 1))
+    done
+
+    /usr/bin/open -g -b tracesOf.Uebersicht
+    attempt=0
+    until /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' >/dev/null 2>&1; do
+      attempt=$((attempt + 1))
+      if [ "$attempt" -ge 15 ]; then
+        echo "warning: Übersicht started but Simple Bar was not ready after 15 seconds" >&2
+        break
+      fi
+      /bin/sleep 1
+    done
+  '';
+
+  # Start Übersicht once per login, then refresh Simple Bar after its external
+  # configuration has loaded. Übersicht remains running after the shell exits.
   launchd.agents.uebersicht = {
     enable = true;
     config = {
-      ProgramArguments = [ "/usr/bin/open" "-gj" "/Applications/Übersicht.app" ];
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/usr/bin/open -g /Applications/Übersicht.app; /bin/sleep 2; /usr/bin/osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'"
+      ];
+      RunAtLoad = true;
+    };
+  };
+  # Keep the active-window border independent from AeroSpace restarts.
+  launchd.agents.borders = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/opt/homebrew/bin/borders"
+        "active_color=0xffff4057"
+        "inactive_color=0x00000000"
+        "width=3.0"
+        "style=round"
+        "hidpi=on"
+      ];
+      KeepAlive = true;
       RunAtLoad = true;
     };
   };

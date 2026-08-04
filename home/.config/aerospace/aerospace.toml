@@ -60,7 +60,7 @@ automatically-unhide-macos-hidden-apps = false
 # even when they are invisible.
 # This config option is only available since 'config-version = 2'
 # Fallback value (if you omit the key): persistent-workspaces = []
-persistent-workspaces = ["1", "2", "3", "4", "B", "C"]
+persistent-workspaces = ["1", "2", "3", "4", "B", "C", "F"]
 
 # A callback that runs every time binding mode changes
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -81,12 +81,13 @@ key-mapping.preset = 'qwerty'
 #                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
-gaps.inner.horizontal = 0
-gaps.inner.vertical =   0
-gaps.outer.left =       0
-gaps.outer.bottom =     0
-gaps.outer.top =        32
-gaps.outer.right =      0
+# Match mac.config spacing.
+gaps.inner.horizontal = 10
+gaps.inner.vertical =   1
+gaps.outer.left =       10
+gaps.outer.bottom =     10
+gaps.outer.top =        10
+gaps.outer.right =      10
 
 # App placement rules
 # See: https://nikitabobko.github.io/AeroSpace/guide#callbacks
@@ -101,6 +102,34 @@ run = 'move-node-to-workspace B'
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 run = 'move-node-to-workspace B'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = ['layout floating', 'exec-and-forget /usr/bin/osascript -l JavaScript "$HOME/.config/aerospace/center-window.js" "System Settings"']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.iCal'
+run = ['layout floating', 'exec-and-forget /usr/bin/osascript -l JavaScript "$HOME/.config/aerospace/center-window.js" Calendar']
+
+# Telegram's Save panel is an ordinary AX window, not a macOS dialog.
+# Match it before the main Telegram rule so it keeps its native floating frame.
+[[on-window-detected]]
+if.app-id = 'ru.keepcoder.Telegram'
+if.window-title-regex-substring = '^Save$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'ru.keepcoder.Telegram'
+if.window-title-regex-substring = '^Telegram'
+run = ['layout tiling', 'move-node-to-workspace C']
+
+[[on-window-detected]]
+if.app-id = 'net.whatsapp.WhatsApp'
+run = ['layout tiling', 'move-node-to-workspace C']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'move-node-to-workspace F'
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes

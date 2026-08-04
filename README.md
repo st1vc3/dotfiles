@@ -21,7 +21,7 @@ Running the switch builds:
 - Shell (zsh, aliases, starship prompt)
 - Editor (Neovim config with the rose-pine moon theme)
 - Agent configs (Claude, Codex, opencode all share one AGENTS.md)
-- Tiling window manager (AeroSpace) with skhd hotkeys, left Option as the mod key
+- Tiling window manager (AeroSpace) with skhd hotkeys, a red active-window border, and left Option as the mod key
 - Desktop status bar (Übersicht Simple Bar) showing AeroSpace workspaces and system status
 
 ## Prerequisites
@@ -112,17 +112,24 @@ skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and t
 | left Opt+1..4/B/C | switch workspace |
 | left Opt+Shift+1..4/B/C | move window to workspace |
 | left Opt+Tab | previous workspace |
-| left Opt+F | toggle floating |
+| left Opt+F | toggle focused window fullscreen |
 | left Opt+R | flatten layout |
 | Ctrl+left Opt+H/J/K/L | join with neighbour |
 | Ctrl+left Opt+Backspace | close all windows but current |
+| Cmd+E | open Finder on workspace F |
+| Cmd+Shift+3 | region screenshot to `~/Pictures/screenshots` |
+| Cmd+Shift+4 | region screenshot to clipboard |
+| Cmd+Shift+5 | open the Screenshot app's capture/record menu |
 
-Window rules pin kitty to workspace 1 and Zen/Safari to workspace B (`home/.config/aerospace/aerospace.toml`).
+These four use Cmd instead of left Opt, and override macOS defaults for the three screenshot combos (skhd swallows the combo before WindowServer sees it) and Cmd+E's system-wide "Use Selection for Find". `~/Pictures/screenshots` is created by a home-manager activation script so it exists on a fresh machine.
+
+Window rules pin kitty to workspace 1, Zen/Safari to workspace B, Telegram/WhatsApp to workspace C, and Finder to workspace F (`home/.config/aerospace/aerospace.toml`).
 Both configs hot-reload on save; no rebuild needed for binding tweaks.
 
 Simple Bar is pinned by `flake.lock`, installed into Übersicht's widget directory, and configured through `home/.simplebarrc`.
 The AeroSpace config reserves the bar's top gap and refreshes it on focus and workspace changes.
 Its settings are declarative, so edit `home/.simplebarrc` and rebuild instead of changing them through Simple Bar's settings window.
+The network widget shows the Wi-Fi SSID and local IPv4 address. On macOS releases that redact Wi-Fi metadata, allow Übersicht under System Settings -> Privacy & Security -> Location Services; until then the widget safely falls back to `Wi-Fi` instead of displaying `<redacted>`.
 
 If hotkeys ever go deaf while skhd is still running (it can grab a dead event tap when the input stack churns underneath it, e.g. during login or driver changes), restart it:
 
@@ -162,7 +169,7 @@ If you don't use it, just remove it from `brews` in your copy.
 
 - `home/AGENTS.md` is my personal agent policy, and `home.nix` installs it for Claude, Codex, and opencode.
   If you clone this repo, you'd silently inherit my agent instructions - edit or delete `home/AGENTS.md` if you don't want that.
-- The `cc` and `co` shell aliases in `home.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions` and `codex --full-auto`.
+- The `cc`, `co`, and `cx` shell aliases in `home.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions`, `codex --full-auto`, and `codex --dangerously-bypass-approvals-and-sandbox`.
   Claude's settings also suppress the dangerous-mode permission reminder.
   They're convenient for me, but know what they do before you use them.
 - GitHub HTTPS URLs are globally rewritten to SSH by `programs.git.settings.url` in `home.nix`.
