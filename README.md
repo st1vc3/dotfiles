@@ -123,6 +123,7 @@ Both configs hot-reload on save; no rebuild needed for binding tweaks.
 Simple Bar is pinned by `flake.lock`, installed into Übersicht's widget directory, and configured through `home/.simplebarrc`.
 The AeroSpace config reserves the bar's top gap and refreshes it on focus and workspace changes.
 Its settings are declarative, so edit `home/.simplebarrc` and rebuild instead of changing them through Simple Bar's settings window.
+The network widget shows the Wi-Fi SSID and local IPv4 address. On macOS releases that redact Wi-Fi metadata, allow Übersicht under System Settings -> Privacy & Security -> Location Services; until then the widget safely falls back to `Wi-Fi` instead of displaying `<redacted>`.
 
 If hotkeys ever go deaf while skhd is still running (it can grab a dead event tap when the input stack churns underneath it, e.g. during login or driver changes), restart it:
 

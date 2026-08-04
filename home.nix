@@ -8,6 +8,18 @@ let
     name = "zen-extensions";
     paths = [ zenAddons.ublock-origin zenAddons.sponsorblock ];
   };
+  simpleBarWithNetworkAddress = pkgs.runCommand "simple-bar-with-network-address" { } ''
+    /bin/cp -R ${simpleBar} $out
+    /bin/chmod -R u+w $out
+    wifi=$out/lib/components/data/wifi.jsx
+    substituteInPlace $wifi \
+      --replace-fail 'const [status, ssid] = await Promise.all([' 'const [status, ssid, ipAddress] = await Promise.all([' \
+      --replace-fail '  const { status, ssid } = state;' '  const { status, ssid, ipAddress } = state;' \
+      --replace-fail '  const name = renderName(ssid, hideNetworkName);' '  const networkName = ssid === "<redacted>" ? "Wi-Fi" : renderName(ssid, hideNetworkName);'
+    sed -i '/^    ]);/i\      Utils.cachedRun(`ipconfig getifaddr ''${networkDevice} 2>/dev/null`, refresh),' $wifi
+    sed -i '/ssid: Utils.cleanupOutput(ssid),/a\      ipAddress: Utils.cleanupOutput(ipAddress),' $wifi
+    sed -i '/const networkName =/a\  const name = [networkName, ipAddress].filter(Boolean).join(" · ");' $wifi
+  '';
   zenUserJs = pkgs.writeText "zen-user.js" ''
     user_pref("extensions.autoDisableScopes", 0);
     // No confirmation dialogs when quitting or closing a window with tabs open.
@@ -292,7 +304,7 @@ in
 
   home.file.".simplebarrc".source = ./home/.simplebarrc;
 
-  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBar;
+  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBarWithNetworkAddress;
 
   # Hide Übersicht's welcome widget while keeping Simple Bar visible.
   home.file."Library/Application Support/tracesOf.Uebersicht/WidgetSettings.json".text =
