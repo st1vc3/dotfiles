@@ -37,6 +37,10 @@
   nix-homebrew = {
     enable = true;
     inherit user;
+    trust.taps = [
+      "nikitabobko/tap"
+      "FelixKratz/formulae"
+    ];
   };
   homebrew = {
     enable = true;
@@ -45,8 +49,10 @@
     onActivation.extraFlags = [ "--force" ];
     taps = [
       "nikitabobko/tap"
+      "FelixKratz/formulae"
     ];
     brews = [
+      "FelixKratz/formulae/borders"
       "herdr"
       "opencode"
       "ripgrep"

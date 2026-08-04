@@ -19,7 +19,7 @@ Running the switch builds:
 - Shell (zsh, aliases, starship prompt)
 - Editor (Neovim config with the rose-pine moon theme)
 - Agent configs (Claude, Codex, opencode all share one AGENTS.md)
-- Tiling window manager (AeroSpace) with skhd hotkeys, left Option as the mod key
+- Tiling window manager (AeroSpace) with skhd hotkeys, a red active-window border, and left Option as the mod key
 - Desktop status bar (Übersicht Simple Bar) showing AeroSpace workspaces and system status
 
 ## Prerequisites
