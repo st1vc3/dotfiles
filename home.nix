@@ -156,16 +156,61 @@ in
     };
   };
 
+  # Ported verbatim from the nixos repo's config/zsh/starship.toml so the
+  # prompt is identical on both machines. The os module resolves to the Apple
+  # glyph here and the NixOS glyph there from the same config.
   programs.starship = {
     enable = true;
     settings = {
       add_newline = false;
-      format = "$directory$git_branch$git_status$cmd_duration$line_break$character";
-      character = {
-        success_symbol = "[❯](purple)";
-        error_symbol = "[❯](red)";
+      format = "$directory$os$git_branch$git_status$nodejs$rust$golang$php $character";
+
+      os = {
+        disabled = false;
+        format = "[$symbol](#blue) ";
+        symbols = {
+          NixOS = "󱄅";
+          Ubuntu = "󰕈";
+          Artix = "󰣇";
+          Arch = "󰣇";
+          CachyOS = "󰣇";
+          Macos = "";
+        };
       };
-      cmd_duration.format = "[$duration]($style) ";
+
+      directory = {
+        format = "[$path](cyan) ";
+        truncation_length = 4;
+        truncate_to_repo = true;
+      };
+
+      git_branch = {
+        symbol = "";
+        format = "[$symbol $branch](bold purple) ";
+      };
+
+      git_status = {
+        format = "($ahead_behind$staged$modified$untracked$deleted$conflicted)";
+        ahead = "[⇡$count ](bold cyan)";
+        behind = "[⇣$count ](bold cyan)";
+        diverged = "[⇡$ahead_count⇣$behind_count ](bold cyan)";
+        staged = "[+$count ](bold green)";
+        modified = "[●$count ](bold yellow)";
+        untracked = "[?$count ](bold white)";
+        deleted = "[✘$count ](bold red)";
+        conflicted = "[⚡$count ](bold red)";
+      };
+
+      nodejs = { symbol = ""; format = "[$symbol $version](green) "; };
+      rust = { symbol = ""; format = "[$symbol $version](red) "; };
+      golang = { symbol = ""; format = "[$symbol $version](cyan) "; };
+      php = { symbol = ""; format = "[$symbol $version](purple) "; };
+
+      character = {
+        success_symbol = "[❯](green)";
+        error_symbol = "[❯](red)";
+        vimcmd_symbol = "[❮](blue)";
+      };
     };
   };
 
