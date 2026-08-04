@@ -34,6 +34,19 @@ in
     # the nixos repo exactly - fast-syntax-highlighting must load last so it
     # wraps every widget. See the plugin block for the full ordering.
 
+    # History matched to the nixos repo: large, shared across sessions, stored
+    # under XDG state, with the same dedup behaviour.
+    history = {
+      size = 100000;
+      save = 100000;
+      path = "${config.xdg.stateHome}/zsh/history";
+      share = true;
+      ignoreDups = true;
+      ignoreSpace = true;
+      expireDuplicatesFirst = true;
+      findNoDups = true;
+    };
+
     shellAliases = {
       # App-backed coreutils replacements, aliased identically to the nixos
       # repo (eza/bat/ripgrep, all installed as Homebrew formulae).
@@ -55,6 +68,13 @@ in
       push = "git push";
       pull = "git pull";
       m = "git switch main";
+
+      # Git shortcuts shared with the nixos repo. -F quits if the log fits one
+      # screen, -X leaves it on screen after quitting.
+      gs = "git status";
+      gd = "git diff";
+      glog = ''PAGER="less -F -X" git log'';
+      gadog = ''PAGER="less -F -X" git log --all --decorate --oneline --graph'';
       cc = "claude --dangerously-skip-permissions";
       co = "codex --full-auto";
       cx = "codex --dangerously-bypass-approvals-and-sandbox";
@@ -69,6 +89,30 @@ in
     initContent = lib.mkOrder 1500 ''
       # Shell behaviour: type a dir name to cd into it, no bell, natural sort.
       setopt AUTOCD NOBEEP NUMERIC_GLOB_SORT
+
+      # Home Manager points HISTFILE here; make sure its directory exists.
+      mkdir -p "${config.xdg.stateHome}/zsh"
+
+      # Completion tuned like the nixos repo: arrow-key menu selection and
+      # case-insensitive matching ("doc" completes "Documents"). Runs after
+      # Home Manager's compinit thanks to the mkOrder above.
+      zstyle ':completion:*' menu select
+      zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+
+      # System rebuild helpers, mirroring the nixos repo's names. rebuild runs
+      # the repo's own script (symlink + flake archive + darwin-rebuild switch
+      # + skhd check); rehash afterwards so new binaries resolve immediately.
+      rebuild() {
+        "$HOME/.dotfiles/rebuild.sh" || return
+        rehash
+      }
+      generations() {
+        darwin-rebuild --list-generations
+      }
+      rollback_system() {
+        sudo darwin-rebuild --rollback || return
+        rehash
+      }
 
       # Smart directory jumping.
       if (( $+commands[zoxide] )); then
