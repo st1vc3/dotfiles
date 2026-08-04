@@ -29,15 +29,23 @@ in
 
   programs.zsh = {
     enable = true;
-    autosuggestion.enable = true;      # ghost text from history
-    syntaxHighlighting.enable = true;  # commands turn green when valid
-    initContent = ''
-      bindkey '^f' autosuggest-accept
-    '';
+    # Autosuggestions and highlighting are sourced manually in initContent
+    # below (not via the Home Manager modules) so plugin load order matches
+    # the nixos repo exactly - fast-syntax-highlighting must load last so it
+    # wraps every widget. See the plugin block for the full ordering.
+
     shellAliases = {
-      l = "ls --color=auto";
-      ll = "ls -l --color=auto";
-      lll = "ls -lah --color=auto";
+      # App-backed coreutils replacements, aliased identically to the nixos
+      # repo (eza/bat/ripgrep, all installed as Homebrew formulae).
+      ls = "eza --icons";
+      ll = "eza -lh --icons --git";
+      la = "eza -lah --icons --git";
+      tree = "eza --tree --icons";
+      cat = "bat";
+      grep = "rg --color=auto";
+      diff = "diff --color=auto";
+      df = "df -h";
+      vim = "nvim";
 
       ".." = "cd ..";
 
@@ -49,10 +57,83 @@ in
       m = "git switch main";
       cc = "claude --dangerously-skip-permissions";
       co = "codex --full-auto";
+      cx = "codex --dangerously-bypass-approvals-and-sandbox";
       c = "clear";
       zc = "nvim ~/.zshrc";
       zr = "source ~/.zshrc";
     };
+
+    # Mirrors the nixos repo's config/zsh so the shell behaves the same on
+    # both machines. Pinned to the very end (mkOrder 1500) so it runs after
+    # Home Manager's compinit and so fast-syntax-highlighting loads last.
+    initContent = lib.mkOrder 1500 ''
+      # Shell behaviour: type a dir name to cd into it, no bell, natural sort.
+      setopt AUTOCD NOBEEP NUMERIC_GLOB_SORT
+
+      # Smart directory jumping.
+      if (( $+commands[zoxide] )); then
+        eval "$(zoxide init zsh)"
+      fi
+
+      # `cd -` shortcut. shellAliases can't express a bare `-` alias.
+      alias -- -='cd -'
+
+      # Reuse ls completions for eza.
+      compdef eza=ls 2>/dev/null || true
+
+      # Route man pages through bat.
+      if (( $+commands[bat] )); then
+        export MANPAGER="bat -l man -p"
+      fi
+
+      # fzf shell integration (Ctrl-T files, Ctrl-R history). fzf >= 0.48.
+      if (( $+commands[fzf] )); then
+        source <(fzf --zsh)
+      fi
+
+      export FZF_DEFAULT_COMMAND='fd --type f --hidden --strip-cwd-prefix --exclude .git'
+      export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+      export FZF_DEFAULT_OPTS='
+        --height=60%
+        --layout=reverse
+        --border=rounded
+        --prompt="  "
+        --pointer="  "
+        --preview-window=right:65%:wrap:border-left
+      '
+      export _FZF_PREVIEW_CMD='bat --color=always --style=plain,numbers --line-range=:500 -- {}'
+      export FZF_CTRL_T_OPTS="--preview '$_FZF_PREVIEW_CMD'"
+
+      # Ctrl-F: fzf file picker excluding hidden files.
+      _fzf_file_no_hidden() {
+        local result
+        local -a fd_command=(fd --type f --strip-cwd-prefix --exclude .git)
+        result=$("''${fd_command[@]}" | fzf --preview "$_FZF_PREVIEW_CMD") \
+          && LBUFFER+="''${(q)result}"  # Quote the path for safe insertion.
+        zle reset-prompt
+      }
+      zle -N _fzf_file_no_hidden
+
+      # Plugins, sourced in this order so fast-syntax-highlighting wraps every
+      # widget defined above.
+      source "${pkgs.zsh-autosuggestions}/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+      source "${pkgs.zsh-history-substring-search}/share/zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh"
+      source "${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+      source "${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+
+      # zsh-vi-mode rebuilds its keymaps on the first prompt and wipes any
+      # bindkey made earlier - including fzf's Ctrl-R/Ctrl-T - so custom keys
+      # are (re)applied in its documented hook.
+      function zvm_after_init() {
+        bindkey '^[[A' history-substring-search-up
+        bindkey '^[[B' history-substring-search-down
+        bindkey -M vicmd 'k' history-substring-search-up
+        bindkey -M vicmd 'j' history-substring-search-down
+        bindkey '^F' _fzf_file_no_hidden
+        bindkey '^R' fzf-history-widget
+        bindkey '^T' fzf-file-widget
+      }
+    '';
   };
 
   programs.git = {
