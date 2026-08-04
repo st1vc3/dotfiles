@@ -1,4 +1,4 @@
-{ config, lib, pkgs, user, firefox-addons, ... }:
+{ config, lib, pkgs, user, firefox-addons, simpleBar, ... }:
 
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
@@ -119,6 +119,20 @@ in
   home.file.".codex/AGENTS.md".source = liveLink "home/AGENTS.md";
 
   home.file.".config/opencode/AGENTS.md".source = liveLink "home/AGENTS.md";
+
+  home.file.".simplebarrc".source = ./home/.simplebarrc;
+
+  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBar;
+
+  # Start Übersicht once per login. It remains responsible for the widget
+  # process after `open` exits.
+  launchd.agents.uebersicht = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "/usr/bin/open" "-gj" "/Applications/Übersicht.app" ];
+      RunAtLoad = true;
+    };
+  };
 
   # uBlock Origin + SponsorBlock, side-loaded into Zen's real profile.
   # Zen picks a random profile folder name the first time it launches, so it

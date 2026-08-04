@@ -1,0 +1,42 @@
+{
+  "global": {
+    "theme": "dark",
+    "compactMode": true,
+    "disableAnimations": true,
+    "font": "Hack Nerd Font, monospace",
+    "fontSize": "12px",
+    "aerospacePath": "/opt/homebrew/bin/aerospace",
+    "windowManager": "aerospace",
+    "shell": "bash"
+  },
+  "themes": {
+    "lightTheme": "RosePineDawn",
+    "darkTheme": "RosePineMoon"
+  },
+  "process": {
+    "centered": true,
+    "showCurrentSpaceMode": true
+  },
+  "spacesDisplay": {
+    "hideCreateSpaceButton": true,
+    "hideEmptySpaces": false,
+    "showOptionsOnHover": false
+  },
+  "widgets": {
+    "weatherWidget": false,
+    "netstatsWidget": false,
+    "cpuWidget": false,
+    "gpuWidget": false,
+    "memoryWidget": false,
+    "batteryWidget": true,
+    "wifiWidget": true,
+    "vpnWidget": false,
+    "soundWidget": true,
+    "micWidget": false,
+    "dateWidget": true,
+    "timeWidget": true,
+    "spotifyWidget": false,
+    "musicWidget": false,
+    "browserTrackWidget": false
+  }
+}

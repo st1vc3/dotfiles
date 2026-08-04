@@ -122,7 +122,24 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
+        "simpleBar": "simpleBar",
         "wallpaper": "wallpaper"
+      }
+    },
+    "simpleBar": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782800488,
+        "narHash": "sha256-AoVNnaTXCso6dWnv8kwvu+AMHEYU3znnpDk88UjkT/M=",
+        "owner": "Jean-Tinland",
+        "repo": "simple-bar",
+        "rev": "fb5cada548a05bd01f727772c0a18fd8c7f65b42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Jean-Tinland",
+        "repo": "simple-bar",
+        "type": "github"
       }
     },
     "wallpaper": {

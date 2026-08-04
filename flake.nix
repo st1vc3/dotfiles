@@ -17,13 +17,16 @@
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
     firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
 
+    simpleBar.url = "github:Jean-Tinland/simple-bar";
+    simpleBar.flake = false;
+
     # Wallpaper images. Private repo, so fetched over SSH using the same key
     # already used to push this repo - no separate Nix access-token setup needed.
     wallpaper.url = "git+ssh://git@github.com/st1vc3/wallpaper.git";
     wallpaper.flake = false;
   };
 
-  outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, wallpaper }:
+  outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, simpleBar, wallpaper }:
     let
       user = "stivce";
       system = "aarch64-darwin";
@@ -40,7 +43,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit user firefox-addons; };
+            home-manager.extraSpecialArgs = { inherit user firefox-addons simpleBar; };
             home-manager.users.${user} = import ./home.nix;
           }
         ];
