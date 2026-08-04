@@ -19,7 +19,7 @@
   },
   "spacesDisplay": {
     "hideCreateSpaceButton": true,
-    "hideEmptySpaces": false,
+    "hideEmptySpaces": true,
     "showOptionsOnHover": false
   },
   "widgets": {
