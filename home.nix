@@ -152,7 +152,7 @@ in
       attempt=$((attempt + 1))
     done
 
-    /usr/bin/open -gj -b tracesOf.Uebersicht
+    /usr/bin/open -g -b tracesOf.Uebersicht
     attempt=0
     until /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' >/dev/null 2>&1; do
       attempt=$((attempt + 1))
@@ -172,7 +172,7 @@ in
       ProgramArguments = [
         "/bin/sh"
         "-c"
-        "/usr/bin/open -gj /Applications/Übersicht.app; /bin/sleep 2; /usr/bin/osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'"
+        "/usr/bin/open -g /Applications/Übersicht.app; /bin/sleep 2; /usr/bin/osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'"
       ];
       RunAtLoad = true;
     };
