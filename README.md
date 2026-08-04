@@ -123,7 +123,7 @@ skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and t
 
 These four use Cmd instead of left Opt, and override macOS defaults for the three screenshot combos (skhd swallows the combo before WindowServer sees it) and Cmd+E's system-wide "Use Selection for Find". `~/Pictures/screenshots` is created by a home-manager activation script so it exists on a fresh machine.
 
-Window rules pin kitty to workspace 1, Zen/Safari to workspace B, and Telegram/WhatsApp to workspace C (`home/.config/aerospace/aerospace.toml`).
+Window rules pin kitty to workspace 1, Zen/Safari to workspace B, Telegram/WhatsApp to workspace C, and Finder to workspace F (`home/.config/aerospace/aerospace.toml`).
 Both configs hot-reload on save; no rebuild needed for binding tweaks.
 
 Simple Bar is pinned by `flake.lock`, installed into Übersicht's widget directory, and configured through `home/.simplebarrc`.
@@ -169,7 +169,7 @@ If you don't use it, just remove it from `brews` in your copy.
 
 - `home/AGENTS.md` is my personal agent policy, and `home.nix` installs it for Claude, Codex, and opencode.
   If you clone this repo, you'd silently inherit my agent instructions - edit or delete `home/AGENTS.md` if you don't want that.
-- The `cc` and `co` shell aliases in `home.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions` and `codex --full-auto`.
+- The `cc`, `co`, and `cx` shell aliases in `home.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions`, `codex --full-auto`, and `codex --dangerously-bypass-approvals-and-sandbox`.
   Claude's settings also suppress the dangerous-mode permission reminder.
   They're convenient for me, but know what they do before you use them.
 - GitHub HTTPS URLs are globally rewritten to SSH by `programs.git.settings.url` in `home.nix`.
