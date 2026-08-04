@@ -117,7 +117,7 @@ skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and t
 | Ctrl+left Opt+H/J/K/L | join with neighbour |
 | Ctrl+left Opt+Backspace | close all windows but current |
 
-Window rules pin kitty to workspace 1 and Zen/Safari to workspace B (`home/.config/aerospace/aerospace.toml`).
+Window rules pin kitty to workspace 1, Zen/Safari to workspace B, and Telegram/WhatsApp to workspace C (`home/.config/aerospace/aerospace.toml`).
 Both configs hot-reload on save; no rebuild needed for binding tweaks.
 
 Simple Bar is pinned by `flake.lock`, installed into Übersicht's widget directory, and configured through `home/.simplebarrc`.
