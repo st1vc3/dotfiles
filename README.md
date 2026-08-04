@@ -61,7 +61,7 @@ After that, `darwin-rebuild` exists and you're on the normal workflow below.
 
 ### Validate without applying
 
-Once Nix is installed (`bootstrap.sh` step 1 handles that), you can check that the config builds without touching your system - handy when you have edited something:
+Once Nix is installed (`bootstrap.sh` step 2 handles that), you can check that the config builds without touching your system - handy when you have edited something:
 
 ```sh
 nix flake check --no-build
@@ -88,9 +88,11 @@ If you clone it, review these before you run `bootstrap.sh`:
 
 - **Username**: run `./bootstrap.sh` (it detects your macOS username and offers to set it) OR change the single `user = "stivce"` line in `flake.nix`.
   Everything else (`configuration.nix`, `home.nix`, home directory paths) is threaded from that one variable.
-- **Host label** `"mac"`, in three places: `flake.nix` (the `darwinConfigurations."mac"` name), `rebuild.sh:5` (the `#mac` at the end of the flake reference), and `bootstrap.sh`'s first-switch command (also `#mac`).
+- **Host label** `"mac"`, in three places: `flake.nix` (the `darwinConfigurations."mac"` name), `rebuild.sh` (the `#mac` at the end of the flake reference), and `bootstrap.sh`'s first-switch command (also `#mac`).
   All three have to match.
 - **CPU architecture**, `hostPlatform` in `configuration.nix` (see Prerequisites above).
+- **Wallpaper**: the `wallpaper` input in `flake.nix` points at my *private* repo over SSH, so a fork can't fetch it - `bootstrap.sh` would fail at the pre-fetch step with an SSH permission error.
+  Either point that input at your own repo of images (and update the image path in `configuration.nix`'s `postActivation` script), or remove the wallpaper setup entirely: the `wallpaper` input and the two `wallpaper` references in `flake.nix`, plus the `postActivation` block in `configuration.nix`.
 
 **Git identity:** this config deliberately does not set your git name or email.
 Git will stop your first commit and tell you to set them (`git config --global user.name "Your Name"` and `git config --global user.email you@example.com`).
