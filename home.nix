@@ -124,12 +124,35 @@ in
 
   home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBar;
 
-  # Start Übersicht once per login. It remains responsible for the widget
-  # process after `open` exits.
+  # Hide Übersicht's welcome widget while keeping Simple Bar visible.
+  home.file."Library/Application Support/tracesOf.Uebersicht/WidgetSettings.json".text =
+    builtins.toJSON {
+      "GettingStarted-jsx" = {
+        hidden = true;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+      "simple-bar-index-jsx" = {
+        hidden = false;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+    };
+
+  # Start Übersicht once per login, then refresh Simple Bar after its external
+  # configuration has loaded. Übersicht remains running after the shell exits.
   launchd.agents.uebersicht = {
     enable = true;
     config = {
-      ProgramArguments = [ "/usr/bin/open" "-gj" "/Applications/Übersicht.app" ];
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/usr/bin/open -gj /Applications/Übersicht.app; /bin/sleep 2; /usr/bin/osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'"
+      ];
       RunAtLoad = true;
     };
   };
