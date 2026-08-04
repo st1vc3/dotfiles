@@ -177,6 +177,22 @@ in
       RunAtLoad = true;
     };
   };
+  # Keep the active-window border independent from AeroSpace restarts.
+  launchd.agents.borders = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/opt/homebrew/bin/borders"
+        "active_color=0xffff4057"
+        "inactive_color=0x00000000"
+        "width=3.0"
+        "style=round"
+        "hidpi=on"
+      ];
+      KeepAlive = true;
+      RunAtLoad = true;
+    };
+  };
 
   # uBlock Origin + SponsorBlock, side-loaded into Zen's real profile.
   # Zen picks a random profile folder name the first time it launches, so it
