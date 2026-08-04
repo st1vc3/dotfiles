@@ -2,6 +2,7 @@
 
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
+  liveLink = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles}/${path}";
   zenAddons = firefox-addons.packages.${pkgs.stdenv.hostPlatform.system};
   zenExtensions = pkgs.symlinkJoin {
     name = "zen-extensions";
@@ -21,6 +22,8 @@ in
 {
   home.username = user;
   home.homeDirectory = "/Users/${user}";
+  # Keep this at the first Home Manager version used by this account. It is a
+  # compatibility boundary, not the version of the currently pinned release.
   home.stateVersion = "24.11";
   home.sessionVariables.EDITOR = "nvim";
 
@@ -37,7 +40,7 @@ in
       lll = "ls -lah --color=auto";
 
       ".." = "cd ..";
-     
+
       v = "nvim";
       ff = "clear; fastfetch";
       add = "git add .";
@@ -85,20 +88,17 @@ in
     };
   };
 
-  home.file.".config/nvim".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/nvim";
+  home.file.".config/nvim".source = liveLink "home/.config/nvim";
 
-  home.file.".config/herdr".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/herdr";
+  # Only the durable config belongs in git. Herdr logs, sockets, release notes,
+  # and session state remain ordinary files under ~/.config/herdr.
+  home.file.".config/herdr/config.toml".source = liveLink "home/.config/herdr/config.toml";
 
-  home.file.".config/kitty".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/kitty";
+  home.file.".config/kitty".source = liveLink "home/.config/kitty";
 
-  home.file.".config/aerospace".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/aerospace";
+  home.file.".config/aerospace".source = liveLink "home/.config/aerospace";
 
-  home.file.".config/skhd".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/skhd";
+  home.file.".config/skhd".source = liveLink "home/.config/skhd";
 
   # skhd runs as a nix-darwin launchd agent, but its config is an out-of-store
   # symlink edited live in the repo. skhd's config watcher tracks the file by
@@ -112,17 +112,13 @@ in
     fi
   '';
 
-  home.file.".claude/settings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.claude/settings.json";
+  home.file.".claude/settings.json".source = liveLink "home/.claude/settings.json";
 
-  home.file.".claude/CLAUDE.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/AGENTS.md";
+  home.file.".claude/CLAUDE.md".source = liveLink "home/AGENTS.md";
 
-  home.file.".codex/AGENTS.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/AGENTS.md";
+  home.file.".codex/AGENTS.md".source = liveLink "home/AGENTS.md";
 
-  home.file.".config/opencode/AGENTS.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/AGENTS.md";
+  home.file.".config/opencode/AGENTS.md".source = liveLink "home/AGENTS.md";
 
   # uBlock Origin + SponsorBlock, side-loaded into Zen's real profile.
   # Zen picks a random profile folder name the first time it launches, so it
@@ -141,8 +137,17 @@ in
       ' "$profilesIni")"
       if [ -n "$zenProfile" ]; then
         profileDir="$HOME/Library/Application Support/zen/$zenProfile"
+        extensionsDir="$profileDir/extensions"
         $DRY_RUN_CMD mkdir -p "$profileDir"
-        $DRY_RUN_CMD ln -sfn "${zenExtensions}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}" "$profileDir/extensions"
+        # Older generations managed the whole directory as one symlink. Move
+        # to per-extension links so existing user-installed extensions survive.
+        if [ -L "$extensionsDir" ]; then
+          $DRY_RUN_CMD rm "$extensionsDir"
+        fi
+        $DRY_RUN_CMD mkdir -p "$extensionsDir"
+        for extension in "${zenExtensions}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"/*; do
+          $DRY_RUN_CMD ln -sfn "$extension" "$extensionsDir/$(basename "$extension")"
+        done
         $DRY_RUN_CMD ln -sfn "${zenUserJs}" "$profileDir/user.js"
       fi
     fi
