@@ -14,7 +14,7 @@
     "darkTheme": "RosePineMoon"
   },
   "process": {
-    "centered": true,
+    "centered": false,
     "showCurrentSpaceMode": true
   },
   "spacesDisplay": {
@@ -23,6 +23,7 @@
     "showOptionsOnHover": false
   },
   "widgets": {
+    "processWidget": false,
     "weatherWidget": false,
     "netstatsWidget": false,
     "cpuWidget": false,
