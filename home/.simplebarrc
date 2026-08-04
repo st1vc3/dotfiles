@@ -11,7 +11,22 @@
   },
   "themes": {
     "lightTheme": "RosePineDawn",
-    "darkTheme": "RosePineMoon"
+    "darkTheme": "RosePineMoon",
+    "colorMain": "#3b0b18",
+    "colorMainAlt": "#5d1024",
+    "colorMinor": "#86182f",
+    "colorAccent": "#ff4d67",
+    "colorRed": "#ff4057",
+    "colorGreen": "#d7827e",
+    "colorYellow": "#f6c177",
+    "colorOrange": "#ea9a97",
+    "colorBlue": "#c45b78",
+    "colorMagenta": "#e84a68",
+    "colorCyan": "#f0a4af",
+    "colorBlack": "#080608",
+    "colorWhite": "#fff1f3",
+    "colorForeground": "#f6e7ea",
+    "colorBackground": "#16070d"
   },
   "process": {
     "centered": false,
