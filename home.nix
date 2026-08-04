@@ -146,10 +146,22 @@ in
   # Reload Übersicht on rebuild so managed settings reach its long-lived WebView.
   home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/' || true
-    /bin/sleep 1
+    attempt=0
+    while /usr/bin/pgrep -f '/Applications/.*bersicht.app/Contents/' >/dev/null && [ "$attempt" -lt 10 ]; do
+      /bin/sleep 1
+      attempt=$((attempt + 1))
+    done
+
     /usr/bin/open -gj -b tracesOf.Uebersicht
-    /bin/sleep 2
-    /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' || true
+    attempt=0
+    until /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' >/dev/null 2>&1; do
+      attempt=$((attempt + 1))
+      if [ "$attempt" -ge 15 ]; then
+        echo "warning: Übersicht started but Simple Bar was not ready after 15 seconds" >&2
+        break
+      fi
+      /bin/sleep 1
+    done
   '';
 
   # Start Übersicht once per login, then refresh Simple Bar after its external
