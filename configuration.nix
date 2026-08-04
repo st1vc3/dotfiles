@@ -63,7 +63,7 @@
       "mas"
     ];
     casks = [
-      "ghostty"
+      "kitty"
       "claude-code"
       "zen"
       "lulu"
