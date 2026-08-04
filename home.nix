@@ -295,6 +295,12 @@ in
     fi
   '';
 
+  # screencapture (bound in skhd to cmd+shift+3/4) writes here; create it up
+  # front so a fresh machine doesn't silently fail on the first screenshot.
+  home.activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "$HOME/Pictures/screenshots"
+  '';
+
   home.file.".claude/settings.json".source = liveLink "home/.claude/settings.json";
 
   home.file.".claude/CLAUDE.md".source = liveLink "home/AGENTS.md";

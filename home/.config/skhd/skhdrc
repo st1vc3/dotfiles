@@ -12,6 +12,12 @@ shift + lalt - return : /opt/homebrew/bin/aerospace workspace 1 && /usr/bin/open
 # MOZ_DISABLE_SAFE_MODE_KEY avoids that (env vars don't survive `open`).
 lalt - s : /opt/homebrew/bin/aerospace workspace B && { /usr/bin/pgrep -xq zen && /usr/bin/open -a Zen || MOZ_DISABLE_SAFE_MODE_KEY=1 /Applications/Zen.app/Contents/MacOS/zen; }
 
+# Screenshots (overrides the macOS defaults so region-capture is the norm;
+# home.nix creates ~/Pictures/screenshots so these never fail on a fresh machine)
+cmd + shift - 3 : /usr/sbin/screencapture -i "$HOME/Pictures/screenshots/screenshot-$(date +%Y-%m-%d_%H.%M.%S).png"
+cmd + shift - 4 : /usr/sbin/screencapture -ic
+cmd + shift - 5 : /usr/bin/open -a Screenshot
+
 # Focus (vim-style)
 lalt - h : /opt/homebrew/bin/aerospace focus left
 lalt - j : /opt/homebrew/bin/aerospace focus down

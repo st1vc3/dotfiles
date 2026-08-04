@@ -114,6 +114,11 @@ skhd can: everything is bound to `lalt`, so the LEFT Option is the mod key and t
 | left Opt+R | flatten layout |
 | Ctrl+left Opt+H/J/K/L | join with neighbour |
 | Ctrl+left Opt+Backspace | close all windows but current |
+| Cmd+Shift+3 | region screenshot to `~/Pictures/screenshots` |
+| Cmd+Shift+4 | region screenshot to clipboard |
+| Cmd+Shift+5 | open the Screenshot app's capture/record menu |
+
+These three override the macOS defaults (skhd swallows the combo before WindowServer sees it); `~/Pictures/screenshots` is created by a home-manager activation script so it exists on a fresh machine.
 
 Window rules pin kitty to workspace 1, Zen/Safari to workspace B, and Telegram/WhatsApp to workspace C (`home/.config/aerospace/aerospace.toml`).
 Both configs hot-reload on save; no rebuild needed for binding tweaks.
