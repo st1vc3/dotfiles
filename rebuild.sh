@@ -3,7 +3,11 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-ln -sfn "$DIR" ~/.dotfiles
+if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
+  echo "Error: ~/.dotfiles exists and is not a symbolic link. Move it, then rerun rebuild.sh." >&2
+  exit 1
+fi
+ln -sfn "$DIR" "$HOME/.dotfiles"
 
 nix flake archive ~/.dotfiles
 

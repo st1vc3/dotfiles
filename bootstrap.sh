@@ -4,12 +4,22 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+NIX_INSTALLER_VERSION="v3.21.0"
+NIX_INSTALLER_SHA256="c3cf066a28941e89fa1e38ed36f2acfc7479f9b088ddcf35160362a5ee89bd43"
+NIX_INSTALLER_TMP=""
 
 echo "==> Requesting sudo access up front"
 sudo -v
 while true; do sudo -n true; sleep 60; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
-trap 'pkill -P "$SUDO_KEEPALIVE_PID" 2>/dev/null; kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
+cleanup() {
+  pkill -P "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  if [ -n "$NIX_INSTALLER_TMP" ]; then
+    rm -f "$NIX_INSTALLER_TMP"
+  fi
+}
+trap cleanup EXIT
 
 echo "==> Step 1: Xcode Command Line Tools"
 if xcode-select -p >/dev/null 2>&1; then
@@ -33,21 +43,40 @@ elif [ -e "$NIX_PROFILE_SH" ]; then
   # shellcheck disable=SC1090
   . "$NIX_PROFILE_SH"
 else
-  for vol in $(diskutil list 2>/dev/null | awk '/Nix Store/ {print $NF}'); do
+  while IFS= read -r vol; do
+    [ -n "$vol" ] || continue
     mp="$(diskutil info "$vol" 2>/dev/null | sed -nE 's/.*Mount Point:[[:space:]]*//p')"
     if [ -z "$mp" ] || [ "$mp" = "Not Mounted" ]; then
-      echo "    removing stale un-mounted 'Nix Store' volume $vol"
-      sudo diskutil apfs deleteVolume "$vol" >/dev/null 2>&1 || true
+      echo "    found unmounted 'Nix Store' volume: $vol"
+      diskutil info "$vol" | sed -nE '/Device Identifier|Volume Name|Disk Size|APFS Volume Disk/p'
+      read -r -p "    Permanently delete this stale volume? [y/N] " REPLY
+      if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+        sudo diskutil apfs deleteVolume "$vol"
+      else
+        echo "    Refusing to delete $vol. Resolve it manually, then rerun bootstrap.sh." >&2
+        exit 1
+      fi
     fi
-  done
-  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
-    | sh -s -- install --no-confirm
+  done < <(diskutil list 2>/dev/null | awk '/Nix Store/ {print $NF}')
+
+  NIX_INSTALLER_TMP="$(mktemp -t determinate-nix-installer.XXXXXX)"
+  curl --proto '=https' --tlsv1.2 -sSfL \
+    "https://install.determinate.systems/nix/tag/${NIX_INSTALLER_VERSION}/nix-installer.sh" \
+    -o "$NIX_INSTALLER_TMP"
+  echo "${NIX_INSTALLER_SHA256}  ${NIX_INSTALLER_TMP}" | shasum -a 256 -c -
+  sh "$NIX_INSTALLER_TMP" install --no-confirm
+  rm -f "$NIX_INSTALLER_TMP"
+  NIX_INSTALLER_TMP=""
   # shellcheck disable=SC1090
   . "$NIX_PROFILE_SH"
 fi
 
 echo "==> Step 3: symlink this repo to ~/.dotfiles"
-ln -sfn "$DIR" ~/.dotfiles
+if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
+  echo "Error: ~/.dotfiles exists and is not a symbolic link. Move it, then rerun bootstrap.sh." >&2
+  exit 1
+fi
+ln -sfn "$DIR" "$HOME/.dotfiles"
 
 echo "==> Step 4: personalize the configured username"
 REAL_USER="$(whoami)"
