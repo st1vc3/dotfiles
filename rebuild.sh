@@ -14,4 +14,6 @@ nix flake archive ~/.dotfiles
 # Use the darwin-rebuild installed by the first switch. `nix run nix-darwin`
 # would resolve through the flake registry to an unpinned master checkout and
 # execute it as root; the installed tool matches what flake.lock pinned.
-exec sudo darwin-rebuild switch --flake ~/.dotfiles#mac
+sudo darwin-rebuild switch --flake ~/.dotfiles#mac
+
+"$DIR/check-skhd.sh"

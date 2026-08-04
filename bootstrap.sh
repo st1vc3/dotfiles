@@ -144,4 +144,20 @@ else
   echo "    Zen not installed, skipping"
 fi
 
+echo "==> Step 8: start AeroSpace"
+if [ -d "/Applications/AeroSpace.app" ]; then
+  if pgrep -xq AeroSpace; then
+    echo "    already running, skipping"
+  else
+    echo "    launching AeroSpace - grant Accessibility when macOS asks."
+    echo "    start-at-login in aerospace.toml takes over from the next login on."
+    open -a AeroSpace
+  fi
+else
+  echo "    AeroSpace not installed, skipping"
+fi
+
+echo "==> Step 9: skhd Accessibility grant"
+"$DIR/check-skhd.sh"
+
 echo "==> Done. Use ./rebuild.sh for future changes."
