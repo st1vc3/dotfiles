@@ -39,7 +39,9 @@
   homebrew = {
     enable = true;
     onActivation.cleanup = "zap";  # remove anything not listed here
-    onActivation.autoUpdate = true;
+    # Keep switches deterministic: don't let brew pull whatever is newest that
+    # day. Update deliberately with `brew update` before a rebuild instead.
+    onActivation.autoUpdate = false;
     onActivation.extraFlags = [ "--force" ];
     taps = [
       "nikitabobko/tap"
@@ -90,8 +92,11 @@
   # per-user desktop picture) has to be handed off to the logged-in user's
   # session via launchctl asuser. Runs after the homebrew block above, so
   # desktoppr is already installed by the time this executes.
+  # A cosmetic step must not abort the switch after everything else already
+  # applied, so warn instead of failing if desktoppr or the image is missing.
   system.activationScripts.postActivation.text = ''
     uid=$(id -u ${user})
-    launchctl asuser "$uid" sudo -u ${user} /usr/local/bin/desktoppr "${wallpaper}/abstract/red.png"
+    launchctl asuser "$uid" sudo -u ${user} /usr/local/bin/desktoppr "${wallpaper}/abstract/red.png" \
+      || echo "warning: desktoppr failed, wallpaper not set" >&2
   '';
 }
