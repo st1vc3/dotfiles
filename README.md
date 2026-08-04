@@ -35,7 +35,7 @@ Running the switch builds:
 On a brand new Mac, from a bare clone of this repo:
 
 ```sh
-git clone https://github.com/st1vc3/dotfiles.git
+git clone https://github.com/st1vc3/macosx.git
 cd dotfiles
 ```
 
