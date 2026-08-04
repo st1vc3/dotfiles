@@ -25,8 +25,6 @@
 
   outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, wallpaper }:
     let
-      # The one username line to change if this isn't your machine.
-      # bootstrap.sh offers to rewrite this for you if your macOS username differs.
       user = "stivce";
     in
     {
@@ -39,8 +37,6 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            # On a fresh machine some target files (e.g. ~/.zshrc) already
-            # exist; back them up instead of aborting the activation.
             home-manager.backupFileExtension = "backup";
             home-manager.extraSpecialArgs = { inherit user firefox-addons; };
             home-manager.users.${user} = import ./home.nix;

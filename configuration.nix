@@ -33,13 +33,6 @@
     finder.NewWindowTarget = "Home";       # new windows open in the home dir
     trackpad.Clicking = true;              # tap to click
   };
-  # skhd owns all window-manager hotkeys with LEFT Option (lalt) as the mod
-  # key: AeroSpace cannot tell left/right Option apart, skhd can. The right
-  # Option stays free for German character input (@, brackets, etc.).
-  # With skhdConfig unset, skhd reads ~/.config/skhd/skhdrc, which home.nix
-  # symlinks into this repo - edits there hot-reload without a rebuild.
-  # skhd needs a one-time Accessibility grant on first start
-  # (System Settings -> Privacy & Security -> Accessibility).
   services.skhd.enable = true;
   nix-homebrew = {
     enable = true;
@@ -48,8 +41,6 @@
   homebrew = {
     enable = true;
     onActivation.cleanup = "zap";  # remove anything not listed here
-    # Keep switches deterministic: don't let brew pull whatever is newest that
-    # day. Update deliberately with `brew update` before a rebuild instead.
     onActivation.autoUpdate = false;
     onActivation.extraFlags = [ "--force" ];
     taps = [
@@ -91,19 +82,8 @@
       "font-hack-nerd-font"
       "desktoppr"
     ];
-    # Mac App Store apps (mas) can't be automated here: darwin-rebuild runs
-    # `brew bundle` under sudo during activation, but mas needs the logged-in
-    # user's App Store session, which isn't reachable from that context.
-    # Known upstream issue, no fix available - install these manually instead:
-    #   mas install 1451685025   # WireGuard
   };
 
-  # All nix-darwin activation runs as root, so desktoppr (which sets a
-  # per-user desktop picture) has to be handed off to the logged-in user's
-  # session via launchctl asuser. Runs after the homebrew block above, so
-  # desktoppr is already installed by the time this executes.
-  # A cosmetic step must not abort the switch after everything else already
-  # applied, so warn instead of failing if desktoppr or the image is missing.
   system.activationScripts.postActivation.text = ''
     uid=$(id -u ${user})
     launchctl asuser "$uid" sudo -u ${user} /usr/local/bin/desktoppr "${wallpaper}/abstract/red.png" \
