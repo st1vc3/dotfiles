@@ -68,6 +68,7 @@
       "jq"
       "neovim"
       "fastfetch"
+      "shellcheck"
       "mas"
     ];
     casks = [
