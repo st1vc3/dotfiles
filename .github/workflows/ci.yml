@@ -48,6 +48,7 @@ jobs:
             --command bash -euo pipefail -c '
               actionlint
               git ls-files -z "*.json" | xargs -0 jq empty
+              jq empty home/.simplebarrc
               taplo lint home/.config/aerospace/aerospace.toml home/.config/herdr/config.toml
             '
 
