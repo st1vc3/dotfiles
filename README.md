@@ -53,7 +53,7 @@ Change the host label if needed, and read the Homebrew cleanup warning.
    Homebrew needs these later; checking here means the GUI installer prompt (if any) happens up front with context, not buried mid-way through Homebrew's own bootstrap.
 2. Installs a pinned, checksum-verified Determinate Nix release, if Nix isn't already installed.
 3. Symlinks this repo to `~/.dotfiles`.
-   This has to happen before the first build, because `home.nix` points at config files through `~/.dotfiles`.
+   This has to happen before the first build, because the Home Manager modules point at config files through `~/.dotfiles`.
 4. Checks the `user` configured in `flake.nix` against your actual macOS username, and offers to fix it for you if they differ.
 5. Pre-fetches the flake inputs as your user, so the private wallpaper repo is fetched with your SSH key (root's ssh can't use it).
 6. Runs the first `darwin-rebuild switch`.
@@ -151,7 +151,7 @@ If you clone it, review these before you run `bootstrap.sh`:
 - **Wallpaper**: the `wallpaper` input in `flake.nix` points at my *private* repo over SSH, so a fork can't fetch it - `bootstrap.sh` would fail at the pre-fetch step with an SSH permission error.
   Either point that input at your own repo of images (and update the image path in `configuration.nix`'s `postActivation` script), or remove the wallpaper setup entirely: the `wallpaper` input and the two `wallpaper` references in `flake.nix`, plus the `postActivation` block in `configuration.nix`.
 
-**Git identity:** `home.nix` sets *my* git identity declaratively (`programs.git.settings.user` - the name `st1vc3` and my GitHub noreply email).
+**Git identity:** `modules/home/shell.nix` sets *my* git identity declaratively (`programs.git.settings.user` - the name `st1vc3` and my GitHub noreply email).
 If you clone this repo, change those two lines to your own name and email, or delete the `user` block entirely and git will stop your first commit and tell you what to set.
 
 **Homebrew cleanup warning:** `configuration.nix` sets `homebrew.onActivation.cleanup = "zap"`.
@@ -165,12 +165,12 @@ If you don't use it, just remove it from `brews` in your copy.
 
 **Heads-up:**
 
-- `home/AGENTS.md` is my personal agent policy, and `home.nix` installs it for Claude, Codex, and opencode.
+- `home/AGENTS.md` is my personal agent policy, and `modules/home/development.nix` installs it for Claude, Codex, and opencode.
   If you clone this repo, you'd silently inherit my agent instructions - edit or delete `home/AGENTS.md` if you don't want that.
-- The `cc`, `co`, and `cx` shell aliases in `home.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions`, `codex --full-auto`, and `codex --dangerously-bypass-approvals-and-sandbox`.
+- The `cc`, `co`, and `cx` shell aliases in `modules/home/shell.nix` are high-agency shortcuts: `claude --dangerously-skip-permissions`, `codex --full-auto`, and `codex --dangerously-bypass-approvals-and-sandbox`.
   Claude's settings also suppress the dangerous-mode permission reminder.
   They're convenient for me, but know what they do before you use them.
-- GitHub HTTPS URLs are globally rewritten to SSH by `programs.git.settings.url` in `home.nix`.
+- GitHub HTTPS URLs are globally rewritten to SSH by `programs.git.settings.url` in `modules/home/shell.nix`.
   This matches the machine's authentication setup and also means tools such as lazy.nvim fetch GitHub repositories over SSH.
 
 ## Repo tour
@@ -179,6 +179,11 @@ If you don't use it, just remove it from `brews` in your copy.
   Wires up nixpkgs, nix-darwin, home-manager, and nix-homebrew, and declares the `mac` machine.
 - `configuration.nix` - system-level config: macOS defaults, Homebrew.
 - `home.nix` - user-level entry point, composed from the focused modules under `modules/home/`.
+- `modules/home/shell.nix` - zsh, Git, and Starship.
+- `modules/home/development.nix` - live links for Neovim, Herdr, and agent configuration.
+- `modules/home/desktop.nix` - Kitty, AeroSpace, skhd, Simple Bar, screenshots, and desktop launch agents.
+- `modules/home/zen.nix` - Zen preferences and managed browser extensions.
+- `patches/` - checked patches applied to pinned upstream sources during Nix builds.
 - `bootstrap.sh` - one-time setup for a fresh Mac: installs the Command Line Tools and Nix, then runs the first switch (see "Fresh-machine setup" above).
 - `rebuild.sh` - re-applies the config after the first switch.
   Run this every time you make a change.
@@ -189,7 +194,7 @@ If you don't use it, just remove it from `brews` in your copy.
 ## How the symlinks work
 
 The durable configuration files under `home/` are the real files - editing them here is editing your live config, no rebuild needed to see the change in your editor.
-`home.nix` uses `mkOutOfStoreSymlink` to point paths like `~/.config/nvim` straight at this repo, so the two never drift out of sync.
+The focused Home Manager modules use `mkOutOfStoreSymlink` to point paths like `~/.config/nvim` straight at this repo, so the two never drift out of sync.
 For Herdr, only `config.toml` is linked; logs, sockets, release notes, and session state stay outside the repository.
 You only run `./rebuild.sh` when you change something that isn't just a symlinked file, like a package list or a system default.
 
@@ -198,6 +203,8 @@ You only run `./rebuild.sh` when you change something that isn't just a symlinke
 The first time you launch `nvim`, it bootstraps [lazy.nvim](https://github.com/folke/lazy.nvim) by cloning plugins from GitHub.
 That needs network access once; after that it's offline.
 Neovim keeps italics off and uses a transparent background on macOS, Windows, and WSL so it matches the terminal setup.
+
+The generated Home Manager configuration manpage is disabled because its upstream options derivation currently emits an invalid Nix store-context warning. Ordinary system manpages remain enabled.
 
 ## License
 
