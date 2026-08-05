@@ -61,7 +61,9 @@ in
           $DRY_RUN_CMD ln -sfn "$extension" "$extensionsDir/$(basename "$extension")"
         done
         $DRY_RUN_CMD ln -sfn "${zenUserJs}" "$profileDir/user.js"
-        $DRY_RUN_CMD ${pkgs.coreutils}/bin/cp "${zenExtensionManifest}" "$managedExtensions"
+        manifestTmp="$managedExtensions.tmp"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0644 "${zenExtensionManifest}" "$manifestTmp"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mv -f "$manifestTmp" "$managedExtensions"
       fi
     fi
   '';
