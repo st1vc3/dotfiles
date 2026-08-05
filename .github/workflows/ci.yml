@@ -13,7 +13,7 @@ jobs:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: validate shell scripts
         run: |
           shellcheck bootstrap.sh rebuild.sh check-skhd.sh
@@ -21,16 +21,11 @@ jobs:
 
   flake:
     name: configuration + full build
-    # arm64 runner, matching hostPlatform = "aarch64-darwin"
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25
 
-      # The wallpaper input is a private repo fetched over SSH, which CI can't
-      # reach. Evaluation only embeds the input's store path as a string, so a
-      # checked-in stub directory is a faithful stand-in. --no-write-lock-file
-      # because an overridden input can't be recorded in flake.lock anyway.
       - name: nix flake check
         run: >
           nix flake check --no-build --no-write-lock-file

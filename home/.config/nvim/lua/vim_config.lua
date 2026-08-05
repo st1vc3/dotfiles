@@ -9,5 +9,4 @@ o.smartcase = true
 o.clipboard = 'unnamedplus'
 o.scrolloff = 16
 o.undofile = true
--- Disabling Neovim mouse input also prevents Herdr from swallowing Escape.
 o.mouse = ''

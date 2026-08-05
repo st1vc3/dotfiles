@@ -12,7 +12,6 @@ let
   '';
   zenUserJs = pkgs.writeText "zen-user.js" ''
     user_pref("extensions.autoDisableScopes", 0);
-    // No confirmation dialogs when quitting or closing a window with tabs open.
     user_pref("browser.warnOnQuit", false);
     user_pref("browser.warnOnQuitShortcut", false);
     user_pref("browser.sessionstore.warnOnQuit", false);
@@ -21,13 +20,6 @@ let
   '';
 in
 {
-  # uBlock Origin + SponsorBlock, side-loaded into Zen's real profile.
-  # Zen picks a random profile folder name the first time it launches, so it
-  # can't be a static home.file path known at Nix eval time - it has to be
-  # resolved live, on the machine, at activation time (every rebuild), by
-  # reading the Default= profile out of Zen's own profiles.ini. If Zen hasn't
-  # been launched yet, this quietly does nothing; the next rebuild after Zen
-  # has run once will pick it up.
   home.activation.zenExtensions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     profilesIni="$HOME/Library/Application Support/zen/profiles.ini"
     if [ -f "$profilesIni" ]; then
@@ -41,8 +33,6 @@ in
         extensionsDir="$profileDir/extensions"
         managedExtensions="$profileDir/.nix-managed-extensions"
         $DRY_RUN_CMD mkdir -p "$profileDir"
-        # Older generations managed the whole directory as one symlink. Move
-        # to per-extension links so existing user-installed extensions survive.
         if [ -L "$extensionsDir" ]; then
           $DRY_RUN_CMD rm "$extensionsDir"
         fi

@@ -7,8 +7,6 @@ in
 {
   home.file.".config/nvim".source = liveLink "home/.config/nvim";
 
-  # Only the durable config belongs in git. Herdr logs, sockets, release notes,
-  # and session state remain ordinary files under ~/.config/herdr.
   home.file.".config/herdr/config.toml".source = liveLink "home/.config/herdr/config.toml";
 
   home.file.".claude/settings.json".source = liveLink "home/.claude/settings.json";

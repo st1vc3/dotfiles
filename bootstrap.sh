@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Takes a fresh Mac from nothing to a built nix-darwin config.
-# Run this once. After it finishes, use ./rebuild.sh for every later change.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -40,8 +38,7 @@ if command -v nix >/dev/null 2>&1; then
   echo "    nix already installed, skipping"
 elif [ -e "$NIX_PROFILE_SH" ]; then
   echo "    nix already installed but not on this shell's PATH, loading it"
-  # shellcheck disable=SC1090
-  . "$NIX_PROFILE_SH"
+  PATH="/nix/var/nix/profiles/default/bin:$PATH"
 else
   while IFS= read -r vol; do
     [ -n "$vol" ] || continue
@@ -67,8 +64,7 @@ else
   sh "$NIX_INSTALLER_TMP" install --no-confirm
   rm -f "$NIX_INSTALLER_TMP"
   NIX_INSTALLER_TMP=""
-  # shellcheck disable=SC1090
-  . "$NIX_PROFILE_SH"
+  PATH="/nix/var/nix/profiles/default/bin:$PATH"
 fi
 
 echo "==> Step 3: symlink this repo to ~/.dotfiles"

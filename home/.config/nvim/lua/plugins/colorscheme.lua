@@ -21,7 +21,6 @@ return {
 
       vim.cmd('colorscheme rose-pine')
 
-      -- Make the dimmed directory path in the Snacks picker readable
       local palette = require('rose-pine.palette')
       vim.api.nvim_set_hl(0, 'SnacksPickerDir', { fg = palette.subtle })
     end,

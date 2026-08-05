@@ -2,9 +2,7 @@
   description = "dotfiles";
 
   inputs = {
-    # Use `github:NixOS/nixpkgs/nixpkgs-26.05-darwin` to use Nixpkgs 26.05.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
-    # Use `github:nix-darwin/nix-darwin/nix-darwin-26.05` to use Nixpkgs 26.05.
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -13,15 +11,12 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
-    # Prebuilt Firefox-compatible browser extensions (used to side-load into Zen).
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
     firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
 
     simpleBar.url = "github:Jean-Tinland/simple-bar";
     simpleBar.flake = false;
 
-    # Wallpaper images. Private repo, so fetched over SSH using the same key
-    # already used to push this repo - no separate Nix access-token setup needed.
     wallpaper.url = "git+ssh://git@github.com/st1vc3/wallpaper.git";
     wallpaper.flake = false;
   };

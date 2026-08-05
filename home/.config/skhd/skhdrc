@@ -1,39 +1,23 @@
-# Window-manager hotkeys, LEFT Option (lalt) as the mod key. skhd catches
-# the combos and calls the aerospace CLI; AeroSpace itself binds no keys
-# (it cannot tell the two Option keys apart, skhd can). The RIGHT Option
-# stays a plain Option for typing German layout characters (@ via ropt-l,
-# € ~ brackets, etc.). skhd hot-reloads this file on save.
 
-# Launchers
 lalt - return : /opt/homebrew/bin/aerospace workspace 1 && /usr/bin/open -na kitty
 shift + lalt - return : /opt/homebrew/bin/aerospace workspace 1 && /usr/bin/open -na kitty --args herdr
-# Zen (Firefox-based) treats a held Option at cold start as the
-# troubleshoot-mode trigger; the direct binary launch with
-# MOZ_DISABLE_SAFE_MODE_KEY avoids that (env vars don't survive `open`).
 lalt - s : /opt/homebrew/bin/aerospace workspace B && { /usr/bin/pgrep -xq zen && /usr/bin/open -a Zen || MOZ_DISABLE_SAFE_MODE_KEY=1 /Applications/Zen.app/Contents/MacOS/zen; }
-# Shadows macOS's system-wide "Use Selection for Find" (Cmd+E in most Cocoa
-# text views); accepted trade-off, that feature is rarely used.
 cmd - e : /opt/homebrew/bin/aerospace workspace F && /usr/bin/open -a Finder ~
 
-# Screenshots (overrides the macOS defaults so region-capture is the norm;
-# home.nix creates ~/Pictures/screenshots so these never fail on a fresh machine)
 cmd + shift - 3 : /usr/sbin/screencapture -i "$HOME/Pictures/screenshots/screenshot-$(date +%Y-%m-%d_%H.%M.%S).png"
 cmd + shift - 4 : /usr/sbin/screencapture -ic
 cmd + shift - 5 : /usr/bin/open -a Screenshot
 
-# Focus (vim-style)
 lalt - h : /opt/homebrew/bin/aerospace focus left
 lalt - j : /opt/homebrew/bin/aerospace focus down
 lalt - k : /opt/homebrew/bin/aerospace focus up
 lalt - l : /opt/homebrew/bin/aerospace focus right
 
-# Move window
 shift + lalt - h : /opt/homebrew/bin/aerospace move left
 shift + lalt - j : /opt/homebrew/bin/aerospace move down
 shift + lalt - k : /opt/homebrew/bin/aerospace move up
 shift + lalt - l : /opt/homebrew/bin/aerospace move right
 
-# Workspaces (the persistent set from aerospace.toml)
 lalt - 1 : /opt/homebrew/bin/aerospace workspace 1
 lalt - 2 : /opt/homebrew/bin/aerospace workspace 2
 lalt - 3 : /opt/homebrew/bin/aerospace workspace 3
@@ -42,7 +26,6 @@ lalt - b : /opt/homebrew/bin/aerospace workspace B
 lalt - c : /opt/homebrew/bin/aerospace workspace C
 lalt - tab : /opt/homebrew/bin/aerospace workspace-back-and-forth
 
-# Move window to workspace
 shift + lalt - 1 : /opt/homebrew/bin/aerospace move-node-to-workspace 1
 shift + lalt - 2 : /opt/homebrew/bin/aerospace move-node-to-workspace 2
 shift + lalt - 3 : /opt/homebrew/bin/aerospace move-node-to-workspace 3
@@ -51,18 +34,13 @@ shift + lalt - b : /opt/homebrew/bin/aerospace move-node-to-workspace B
 shift + lalt - c : /opt/homebrew/bin/aerospace move-node-to-workspace C
 shift + lalt - tab : /opt/homebrew/bin/aerospace move-workspace-to-monitor --wrap-around next
 
-# Layout and resize (hex codes are physical key positions: 0x2C=/ 0x2B=,
-# 0x1B=- 0x18==)
 lalt - 0x2C : /opt/homebrew/bin/aerospace layout tiles horizontal vertical
 lalt - 0x2B : /opt/homebrew/bin/aerospace layout accordion horizontal vertical
 lalt - 0x1B : /opt/homebrew/bin/aerospace resize smart -50
 lalt - 0x18 : /opt/homebrew/bin/aerospace resize smart +50
 
-# Replacements for the old AeroSpace "service mode" commands.
-# reload-config needs no binding: aerospace.toml sets auto-reload-config.
 lalt - f : /opt/homebrew/bin/aerospace fullscreen
 lalt - r : /opt/homebrew/bin/aerospace flatten-workspace-tree
-# ctrl is added here so plain left Option+Backspace keeps deleting words.
 ctrl + lalt - backspace : /opt/homebrew/bin/aerospace close-all-windows-but-current
 ctrl + lalt - h : /opt/homebrew/bin/aerospace join-with left
 ctrl + lalt - j : /opt/homebrew/bin/aerospace join-with down

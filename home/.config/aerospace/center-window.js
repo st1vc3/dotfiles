@@ -5,8 +5,6 @@ function run(arguments) {
   const systemEvents = Application("System Events");
   const process = systemEvents.processes.byName(processName);
 
-  // Applications can reposition a new dialog after AeroSpace detects it.
-  // Keep centering the frontmost window until its initialization has settled.
   for (let attempt = 0; attempt < 20; attempt += 1) {
     if (process.exists() && process.windows.length > 0) {
       const window = process.windows[0];

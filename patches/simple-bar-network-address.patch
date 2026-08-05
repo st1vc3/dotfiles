@@ -2,8 +2,7 @@ diff --git a/lib/components/data/wifi.jsx b/lib/components/data/wifi.jsx
 index 8fb93cf..5a752e7 100644
 --- a/lib/components/data/wifi.jsx
 +++ b/lib/components/data/wifi.jsx
-@@ -55,7 +55,7 @@ export const Widget = React.memo(() => {
-    */
+@@ -56,6 +56,6 @@ export const Widget = React.memo(() => {
    const getWifi = React.useCallback(async () => {
      if (!visible) return;
 -    const [status, ssid] = await Promise.all([

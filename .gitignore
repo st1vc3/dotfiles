@@ -1,7 +1,6 @@
 .DS_Store
 .no-mistakes/
 
-# herdr runtime state (local to this machine, not config)
 home/.config/herdr/*.log
 home/.config/herdr/*.sock
 home/.config/herdr/session.json

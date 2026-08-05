@@ -33,11 +33,6 @@ in
 
   home.file.".config/aerospace".source = liveLink "home/.config/aerospace";
 
-  # Same class of bug as skhd below: aerospace.toml is an out-of-store symlink,
-  # and auto-reload-config tracks it by inode, which git/home-manager rewrite
-  # on every checkout or rebuild. Without this, AeroSpace can run for weeks on
-  # a stale ruleset (window-placement rules silently stop firing) until it's
-  # quit and relaunched by hand.
   home.activation.reloadAerospace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if /usr/bin/pgrep -x AeroSpace >/dev/null 2>&1; then
       if ! $DRY_RUN_CMD /opt/homebrew/bin/aerospace reload-config; then
@@ -48,12 +43,6 @@ in
 
   home.file.".config/skhd".source = liveLink "home/.config/skhd";
 
-  # skhd runs as a nix-darwin launchd agent, but its config is an out-of-store
-  # symlink edited live in the repo. skhd's config watcher tracks the file by
-  # inode, which git rewrites on checkout, so the daemon can silently keep
-  # running a stale config after a rebuild or pull. Kick the service on every
-  # activation so the current skhdrc is always loaded. The Accessibility grant
-  # is tied to skhd's /nix/store path and survives a same-path restart.
   home.activation.reloadSkhd = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ -f "$HOME/Library/LaunchAgents/org.nixos.skhd.plist" ]; then
       if ! $DRY_RUN_CMD /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.skhd"; then
@@ -62,8 +51,6 @@ in
     fi
   '';
 
-  # screencapture (bound in skhd to cmd+shift+3/4) writes here; create it up
-  # front so a fresh machine doesn't silently fail on the first screenshot.
   home.activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p "$HOME/Pictures/screenshots"
   '';
@@ -72,7 +59,6 @@ in
 
   home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBarWithNetworkAddress;
 
-  # Hide Übersicht's welcome widget while keeping Simple Bar visible.
   home.file."Library/Application Support/tracesOf.Uebersicht/WidgetSettings.json".text =
     builtins.toJSON {
       "GettingStarted-jsx" = {
@@ -91,13 +77,10 @@ in
       };
     };
 
-  # Reload Übersicht on rebuild so managed settings reach its long-lived WebView.
   home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${reloadUbersicht}
   '';
 
-  # Start Übersicht once per login, then refresh Simple Bar after its external
-  # configuration has loaded. Übersicht remains running after the shell exits.
   launchd.agents.uebersicht = {
     enable = true;
     config = {
@@ -109,7 +92,6 @@ in
       RunAtLoad = true;
     };
   };
-  # Keep the active-window border independent from AeroSpace restarts.
   launchd.agents.borders = {
     enable = true;
     config = {
