@@ -68,6 +68,16 @@ local sections = {
       { '⌘ ⇧ 5', 'Open capture controls' },
     },
   },
+  {
+    title = 'Herdr',
+    shortcuts = {
+      { '⌃ B, P / N', 'Previous / next tab' },
+      { '⌃ B, 1–9', 'Switch to tab' },
+      { '⌃ B, C', 'Create tab' },
+      { '⌃ B, "', 'Split horizontally' },
+      { '⌃ B, %', 'Split vertically' },
+    },
+  },
 }
 
 local function escapeHtml(value)
@@ -125,7 +135,7 @@ local html = [[
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
   h1 { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.4px; }
   header span { color: #aaa3aa; font-size: 13px; }
-  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 26px; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 22px; }
   section { min-width: 0; }
   h2 {
     color: #ff4057;
@@ -137,7 +147,7 @@ local html = [[
   }
   .row {
     display: grid;
-    grid-template-columns: minmax(104px, auto) 1fr;
+    grid-template-columns: minmax(96px, auto) 1fr;
     align-items: center;
     gap: 10px;
     min-height: 30px;
@@ -168,8 +178,8 @@ local holdTimer
 local function overlayFrame()
   local screen = hs.mouse.getCurrentScreen() or hs.screen.mainScreen()
   local frame = screen:frame()
-  local width = math.min(1050, frame.w - 64)
-  local height = math.min(690, frame.h - 80)
+  local width = math.min(1280, frame.w - 64)
+  local height = math.min(650, frame.h - 80)
   return {
     x = frame.x + (frame.w - width) / 2,
     y = frame.y + (frame.h - height) / 2,
@@ -189,7 +199,8 @@ local function showOverlay()
       :allowTextEntry(false)
       :allowGestures(false)
       :transparent(true)
-      :html((html:gsub('{{SECTIONS}}', renderSections())))
+      :shadow(false)
+      :html((html:gsub('{{SECTIONS}}', function() return renderSections() end)))
   else
     overlay:frame(overlayFrame())
   end
