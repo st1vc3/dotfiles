@@ -122,22 +122,29 @@ local html = [[
     overflow: hidden;
     border-radius: 22px;
     background: transparent;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
   }
   body {
     position: relative;
     isolation: isolate;
-    clip-path: inset(0 round 22px);
+    contain: paint;
+    transform: translateZ(0);
     color: #e8e6e3;
-    background: radial-gradient(circle at top, rgba(86, 31, 43, 0.72), rgba(18, 16, 20, 0.8) 36%);
-    -webkit-backdrop-filter: blur(28px) saturate(135%);
-    backdrop-filter: blur(28px) saturate(135%);
     border: 1px solid rgba(255, 64, 87, 0.48);
     box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  main { padding: 28px 32px 24px; }
+  body::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    content: "";
+    border-radius: inherit;
+    background: radial-gradient(circle at top, rgba(86, 31, 43, 0.72), rgba(18, 16, 20, 0.8) 36%);
+    -webkit-backdrop-filter: blur(28px) saturate(135%);
+    backdrop-filter: blur(28px) saturate(135%);
+  }
+  main { position: relative; z-index: 1; padding: 28px 32px 24px; }
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
   h1 { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.4px; }
   header span { color: #aaa3aa; font-size: 13px; }
