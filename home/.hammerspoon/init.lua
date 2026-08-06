@@ -108,7 +108,9 @@ local html = [[
   html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
   body {
     color: #e8e6e3;
-    background: radial-gradient(circle at top, rgba(86, 31, 43, 0.95), rgba(18, 16, 20, 0.98) 36%);
+    background: radial-gradient(circle at top, rgba(86, 31, 43, 0.72), rgba(18, 16, 20, 0.8) 36%);
+    -webkit-backdrop-filter: blur(28px) saturate(135%);
+    backdrop-filter: blur(28px) saturate(135%);
     border: 1px solid rgba(255, 64, 87, 0.48);
     border-radius: 22px;
     box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
