@@ -96,6 +96,7 @@
       "balenaetcher"
       "ubersicht"
       "utm"
+      "hammerspoon"
       "nikitabobko/tap/aerospace"
       "telegram"
       "whatsapp"

@@ -43,6 +43,8 @@ in
 
   home.file.".config/skhd".source = liveLink "home/.config/skhd";
 
+  home.file.".hammerspoon".source = liveLink "home/.hammerspoon";
+
   home.activation.reloadSkhd = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ -f "$HOME/Library/LaunchAgents/org.nixos.skhd.plist" ]; then
       if ! $DRY_RUN_CMD /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.skhd"; then
@@ -104,6 +106,18 @@ in
         "hidpi=on"
       ];
       KeepAlive = true;
+      RunAtLoad = true;
+    };
+  };
+  launchd.agents.hammerspoon = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/usr/bin/open"
+        "-g"
+        "-a"
+        "Hammerspoon"
+      ];
       RunAtLoad = true;
     };
   };

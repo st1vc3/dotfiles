@@ -44,7 +44,7 @@ If macOS prompts to install the Command Line Tools, complete that installation b
 
 The bootstrap process installs Nix when needed, links the repository at `~/.dotfiles`, validates the configured username, fetches the flake inputs, applies the system configuration, initializes Zen extensions, starts AeroSpace, and verifies skhd.
 
-macOS may request Accessibility access for AeroSpace and skhd. Grant it under System Settings > Privacy & Security > Accessibility.
+macOS may request Accessibility access for AeroSpace, skhd, and Hammerspoon. Grant it under System Settings > Privacy & Security > Accessibility.
 
 ## Updating the machine
 
@@ -88,6 +88,8 @@ Homebrew application versions follow the versions available when activation runs
 ## Keyboard shortcuts
 
 The left Option key is the window-management modifier. The right Option key remains available for German ISO keyboard characters.
+
+Hold Option+Escape for 250 ms to show the complete shortcut reference. Release either key to dismiss it.
 
 | Shortcut | Action |
 | --- | --- |
