@@ -79,6 +79,7 @@
       "kitty"
       "claude-code"
       "codex"
+      "wispr-flow"
       "zen"
       "helium-browser"
       "transmission"
