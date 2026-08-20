@@ -23,7 +23,11 @@
 
   outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, firefox-addons, simpleBar, wallpaper }:
     let
-      user = "stivce";
+      # The account name is machine-specific, so it comes from DOTFILES_USER,
+      # which rebuild.sh exports from the untracked .env. Pure evaluation, as
+      # in CI, sees an empty string and falls back to the personal account.
+      envUser = builtins.getEnv "DOTFILES_USER";
+      user = if envUser != "" then envUser else "stivce";
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
     in

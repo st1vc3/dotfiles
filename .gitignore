@@ -8,3 +8,5 @@ home/.config/herdr/.plugins.lock
 home/.config/herdr/release-notes.json
 
 /result
+
+.env

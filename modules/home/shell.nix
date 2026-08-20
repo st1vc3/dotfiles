@@ -59,6 +59,17 @@
         "$HOME/.dotfiles/rebuild.sh" || return
         rehash
       }
+      # The remote host is machine-specific, so it lives in the untracked .env
+      # rather than in the repository; see .env.example.
+      rcc() {
+        local env_file="$HOME/.dotfiles/.env"
+        [ -r "$env_file" ] && . "$env_file"
+        if [ -z "''${HERDR_REMOTE:-}" ]; then
+          echo "rcc: HERDR_REMOTE is not set - copy .env.example to .env and fill it in" >&2
+          return 1
+        fi
+        herdr --remote "$HERDR_REMOTE" --session cc
+      }
       generations() {
         sudo darwin-rebuild --list-generations
       }

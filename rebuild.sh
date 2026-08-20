@@ -9,8 +9,19 @@ if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
 fi
 ln -sfn "$DIR" "$HOME/.dotfiles"
 
+# The account name is machine-specific and lives in the untracked .env, so the
+# flake reads it from the environment. That makes evaluation impure, and sudo
+# scrubs the environment, so the value is passed through explicitly.
+if [ -r "$DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091 # path is derived at runtime, not checkable here
+  . "$DIR/.env"
+  set +a
+fi
+
 nix flake archive ~/.dotfiles
 
-sudo darwin-rebuild switch --flake ~/.dotfiles#mac
+sudo DOTFILES_USER="${DOTFILES_USER:-}" \
+  darwin-rebuild switch --flake ~/.dotfiles#mac --impure
 
 "$DIR/check-skhd.sh"

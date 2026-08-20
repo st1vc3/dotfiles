@@ -42,7 +42,22 @@ If macOS prompts to install the Command Line Tools, complete that installation b
 ./bootstrap.sh
 ```
 
-The bootstrap process installs Nix when needed, links the repository at `~/.dotfiles`, validates the configured username, fetches the flake inputs, applies the system configuration, initializes Zen extensions, starts AeroSpace, and verifies skhd.
+The bootstrap process installs Nix when needed, links the repository at `~/.dotfiles`, records the account name in `.env`, fetches the flake inputs, applies the system configuration, initializes Zen extensions, starts AeroSpace, and verifies skhd.
+
+### Local configuration
+
+Machine-specific names and hosts live in `.env`, which is not tracked, so they
+never reach the repository. Copy `.env.example` to `.env` and fill it in;
+`bootstrap.sh` creates it and sets `DOTFILES_USER` for you.
+
+| Variable | Used by |
+| --- | --- |
+| `DOTFILES_USER` | The account `flake.nix` builds for |
+| `HERDR_REMOTE` | SSH target for the `rcc` remote Herdr session |
+
+Because the account name comes from the environment, `rebuild.sh` evaluates the
+flake with `--impure`. Pure evaluation, as in CI, falls back to the default
+account in `flake.nix`.
 
 macOS may request Accessibility access for AeroSpace, skhd, and Hammerspoon. Grant it under System Settings > Privacy & Security > Accessibility.
 

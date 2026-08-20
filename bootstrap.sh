@@ -74,26 +74,22 @@ if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
 fi
 ln -sfn "$DIR" "$HOME/.dotfiles"
 
-echo "==> Step 4: personalize the configured username"
+echo "==> Step 4: record the account name in .env"
 REAL_USER="$(whoami)"
-FLAKE_USER="$(sed -nE 's/^[[:space:]]*user = "([^"]+)";.*/\1/p' "$DIR/flake.nix" | head -n1)"
-if [ -z "$FLAKE_USER" ]; then
-  echo "    Could not find the single \"user = \" line in flake.nix."
-  echo "    Edit flake.nix yourself before continuing."
-  exit 1
-elif [ "$FLAKE_USER" != "$REAL_USER" ]; then
-  echo "    flake.nix is configured for user \"$FLAKE_USER\", but you are \"$REAL_USER\"."
-  read -r -p "    Rewrite flake.nix's \"user = \" line to \"$REAL_USER\"? [y/N] " REPLY
-  if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
-    sed -i '' -E "s/^([[:space:]]*user = \")[^\"]+(\";.*)/\1${REAL_USER}\2/" "$DIR/flake.nix"
-    echo "    Updated. Review the change with: git diff flake.nix"
-  else
-    echo "    Skipped. Edit the single \"user = \" line in flake.nix yourself before continuing."
-    exit 1
-  fi
-else
-  echo "    flake.nix already matches \"$REAL_USER\", nothing to do."
+# The account name goes in the untracked .env, never into a tracked file, so a
+# machine-specific account never reaches the repository.
+if [ ! -e "$DIR/.env" ]; then
+  cp "$DIR/.env.example" "$DIR/.env"
+  chmod 600 "$DIR/.env"
+  echo "    Created .env from .env.example"
 fi
+if grep -qE '^DOTFILES_USER=' "$DIR/.env"; then
+  sed -i '' -E "s/^DOTFILES_USER=.*/DOTFILES_USER=${REAL_USER}/" "$DIR/.env"
+else
+  printf 'DOTFILES_USER=%s\n' "$REAL_USER" >>"$DIR/.env"
+fi
+echo "    .env is configured for \"$REAL_USER\""
+echo "    Fill in the remaining values in .env before using rcc or vpn."
 
 NIX_BIN="$(command -v nix)"
 
@@ -102,8 +98,9 @@ GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
   "$NIX_BIN" flake archive ~/.dotfiles
 
 echo "==> Step 6: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
-sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
-  switch --flake ~/.dotfiles#mac
+sudo DOTFILES_USER="$REAL_USER" \
+  "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+  switch --flake ~/.dotfiles#mac --impure
 
 echo "==> Step 7: Zen browser profile"
 if [ -d "/Applications/Zen.app" ]; then
@@ -113,8 +110,9 @@ if [ -d "/Applications/Zen.app" ]; then
     open -a Zen
     read -r -p "    Once Zen has fully started, quit it completely, then press Enter to continue... " _
     echo "    Re-running darwin-rebuild switch so the extensions land in the new profile"
-    sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
-      switch --flake ~/.dotfiles#mac
+    sudo DOTFILES_USER="$REAL_USER" \
+      "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+      switch --flake ~/.dotfiles#mac --impure
   fi
 else
   echo "    Zen not installed, skipping"
