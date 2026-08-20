@@ -38,7 +38,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit user firefox-addons simpleBar; };
+            home-manager.extraSpecialArgs = { inherit user firefox-addons simpleBar wallpaper; };
             home-manager.users.${user} = import ./home.nix;
           }
         ];

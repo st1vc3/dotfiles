@@ -1,13 +1,38 @@
-{ config, lib, pkgs, simpleBar, ... }:
+{ config, lib, pkgs, simpleBar, wallpaper, ... }:
 
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
   liveLink = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles}/${path}";
+  # Ubersicht's page is fully transparent, so backdrop-filter has no backdrop to
+  # sample and renders non-deterministically. Bake a blurred copy of the
+  # wallpaper instead and let the bar composite it. Heavy blur is all low
+  # frequency, so a small downscaled JPEG upscales cleanly and stays tiny.
+  wallpaperBlur = pkgs.runCommand "simple-bar-wallpaper-blur.jpg"
+    { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
+    magick ${wallpaper}/abstract/red.png -resize 900x -blur 0x18 -quality 82 $out
+  '';
   simpleBarWithNetworkAddress = pkgs.runCommand "simple-bar-with-network-address" { } ''
     cp -R ${simpleBar} $out
     chmod -R u+w $out
     patch --directory=$out --strip=1 --fuzz=0 < ${../../patches/simple-bar-network-address.patch}
+    cp ${wallpaperBlur} $out/wallpaper-blur.jpg
   '';
+  uebersichtWidgetSettings = pkgs.writeText "uebersicht-widget-settings.json" (builtins.toJSON {
+    "GettingStarted-jsx" = {
+      hidden = true;
+      screens = [ ];
+      showOnAllScreens = true;
+      showOnMainScreen = false;
+      showOnSelectedScreens = false;
+    };
+    "simple-bar-index-jsx" = {
+      hidden = false;
+      screens = [ ];
+      showOnAllScreens = true;
+      showOnMainScreen = false;
+      showOnSelectedScreens = false;
+    };
+  });
   reloadUbersicht = pkgs.writeShellScript "reload-uebersicht" ''
     /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/' || true
     attempt=0
@@ -61,25 +86,18 @@ in
 
   home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBarWithNetworkAddress;
 
-  home.file."Library/Application Support/tracesOf.Uebersicht/WidgetSettings.json".text =
-    builtins.toJSON {
-      "GettingStarted-jsx" = {
-        hidden = true;
-        screens = [ ];
-        showOnAllScreens = true;
-        showOnMainScreen = false;
-        showOnSelectedScreens = false;
-      };
-      "simple-bar-index-jsx" = {
-        hidden = false;
-        screens = [ ];
-        showOnAllScreens = true;
-        showOnMainScreen = false;
-        showOnSelectedScreens = false;
-      };
-    };
+  # Ubersicht rewrites WidgetSettings.json at runtime, so it cannot be a
+  # read-only store symlink: the app silently fails to persist widget state and
+  # stops placing widgets on any screen. Seed it as a plain writable file
+  # instead - declarative on every rebuild, mutable in between.
+  home.activation.uebersichtWidgetSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    settingsDir="$HOME/Library/Application Support/tracesOf.Uebersicht"
+    $DRY_RUN_CMD mkdir -p "$settingsDir"
+    $DRY_RUN_CMD rm -f "$settingsDir/WidgetSettings.json"
+    $DRY_RUN_CMD install -m 0644 ${uebersichtWidgetSettings} "$settingsDir/WidgetSettings.json"
+  '';
 
-  home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.reloadUbersicht = lib.hm.dag.entryAfter [ "uebersichtWidgetSettings" ] ''
     $DRY_RUN_CMD ${reloadUbersicht}
   '';
 
