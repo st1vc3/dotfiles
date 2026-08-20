@@ -73,7 +73,6 @@
       "docker"
       "sshpass"
       "wget"
-      "wireguard-tools"
     ];
     casks = [
       "kitty"
@@ -102,6 +101,7 @@
       "whatsapp"
       "font-hack-nerd-font"
       "desktoppr"
+      "tailscale-app"
     ];
   };
 
