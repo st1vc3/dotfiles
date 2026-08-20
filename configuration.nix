@@ -72,6 +72,7 @@
       "colima"
       "docker"
       "sshpass"
+      "openconnect"
       "wget"
     ];
     casks = [

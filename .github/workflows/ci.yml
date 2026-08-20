@@ -16,8 +16,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: validate shell scripts
         run: |
-          shellcheck bootstrap.sh rebuild.sh check-skhd.sh
-          bash -n bootstrap.sh rebuild.sh check-skhd.sh
+          shellcheck bootstrap.sh rebuild.sh check-skhd.sh vpn.sh
+          bash -n bootstrap.sh rebuild.sh check-skhd.sh vpn.sh
 
   flake:
     name: configuration + full build

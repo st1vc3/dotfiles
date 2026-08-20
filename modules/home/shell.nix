@@ -40,6 +40,7 @@
       glog = ''PAGER="less -F -X" git log'';
       gadog = ''PAGER="less -F -X" git log --all --decorate --oneline --graph'';
       cc = "claude --dangerously-skip-permissions";
+      vpn = "$HOME/.dotfiles/vpn.sh";
       co = "codex --full-auto";
       cx = "codex --dangerously-bypass-approvals-and-sandbox";
       c = "clear";

@@ -54,6 +54,8 @@ never reach the repository. Copy `.env.example` to `.env` and fill it in;
 | --- | --- |
 | `DOTFILES_USER` | The account `flake.nix` builds for |
 | `HERDR_REMOTE` | SSH target for the `rcc` remote Herdr session |
+| `VPN_PORTAL` | GlobalProtect portal hostname for `vpn.sh` |
+| `VPN_USER` | Account `vpn.sh` authenticates as |
 
 Because the account name comes from the environment, `rebuild.sh` evaluates the
 flake with `--impure`. Pure evaluation, as in CI, falls back to the default
@@ -135,6 +137,27 @@ launchctl kickstart -k gui/$UID/org.nixos.skhd
 
 Run `./check-skhd.sh` to verify the service and its Accessibility permission. A changed Nix store path can require granting skhd access again after a rebuild.
 
+## VPN
+
+The corporate portal speaks GlobalProtect, which Palo Alto only ships a GUI
+client for. `vpn.sh` drives `openconnect` instead and is aliased to `vpn`:
+
+| Command | Effect |
+| --- | --- |
+| `vpn` | Connect |
+| `vpn status` | Show the tunnel interface and assigned address |
+| `vpn down` | Disconnect and tear down the routes |
+| `vpn logs` | Follow the openconnect log |
+
+Set `VPN_PORTAL` and `VPN_USER` in `.env` (see [Local
+configuration](#local-configuration)), so the portal and account stay out of
+the repository. Either value can be overridden for a single run from the
+environment.
+
+Connecting needs `sudo`, since openconnect creates the tunnel device and
+installs routes. The gateway requires a second factor, so openconnect prompts
+for the password and then an MFA passcode on every connection.
+
 ## Repository layout
 
 | Path | Purpose |
@@ -152,6 +175,7 @@ Run `./check-skhd.sh` to verify the service and its Accessibility permission. A 
 | `bootstrap.sh` | First installation |
 | `rebuild.sh` | Subsequent system activation |
 | `check-skhd.sh` | skhd health and permission check |
+| `vpn.sh` | GlobalProtect VPN client over openconnect |
 
 ## Operational notes
 
