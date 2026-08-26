@@ -6,6 +6,7 @@
     ./modules/home/development.nix
     ./modules/home/desktop.nix
     ./modules/home/zen.nix
+    ./modules/home/ssh.nix
   ];
 
   home.username = user;
