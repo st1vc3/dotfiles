@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   programs.zsh = {
@@ -62,14 +67,21 @@
       }
       # The remote host is machine-specific, so it lives in the untracked .env
       # rather than in the repository; see .env.example.
+      #
+      # .env is sourced inside a subshell that emits only the single value this
+      # needs, so the rest of the file never lands in the interactive shell.
       rcc() {
         local env_file="$HOME/.dotfiles/.env"
-        [ -r "$env_file" ] && . "$env_file"
-        if [ -z "''${HERDR_REMOTE:-}" ]; then
+        local remote
+        remote="$(
+          [ -r "$env_file" ] && . "$env_file" >/dev/null 2>&1
+          printf '%s' "''${HERDR_REMOTE:-}"
+        )"
+        if [ -z "$remote" ]; then
           echo "rcc: HERDR_REMOTE is not set - copy .env.example to .env and fill it in" >&2
           return 1
         fi
-        herdr --remote "$HERDR_REMOTE" --session cc
+        herdr --remote "$remote" --session cc
       }
       generations() {
         sudo darwin-rebuild --list-generations
@@ -122,6 +134,22 @@
       source "${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
       source "${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
 
+      # jwp - jenkins work pull. Refreshes every repo in the jenkins-git
+      # workspace, then drops you in the jenkins-setup root. It is a function
+      # rather than an alias to a script because a script runs in a subshell and
+      # cannot change the directory of the shell that called it.
+      export JENKINS_WORK_ROOT="$HOME/Documents/cargo-partner/jenkins-git"
+      jwp() {
+        "$HOME/.dotfiles/jenkins-work-pull.sh" "$@"
+        local rc=$?
+        cd "$JENKINS_WORK_ROOT/jenkins-setup" 2>/dev/null || {
+          print -u2 "jwp: could not cd to $JENKINS_WORK_ROOT/jenkins-setup"
+          return 1
+        }
+        print -P "%B-> $PWD%b"
+        return $rc
+      }
+
       function zvm_after_init() {
         bindkey '^[[A' history-substring-search-up
         bindkey '^[[B' history-substring-search-down
@@ -146,7 +174,12 @@
       fetch.prune = true;
       rebase.autoStash = true;
       diff.colorMoved = "default";
-      url."git@github.com:".insteadOf = "https://github.com/";
+      # pushInsteadOf rather than insteadOf: rewriting fetches as well would
+      # force every anonymous https clone through SSH, which breaks tooling
+      # that bootstraps itself from GitHub (lazy.nvim, go modules, pip and
+      # cargo git dependencies) on a machine with no key loaded. Pushes still
+      # go over SSH.
+      url."git@github.com:".pushInsteadOf = "https://github.com/";
     };
   };
 
@@ -192,10 +225,22 @@
         conflicted = "[⚡$count ](bold red)";
       };
 
-      nodejs = { symbol = ""; format = "[$symbol $version](green) "; };
-      rust = { symbol = ""; format = "[$symbol $version](red) "; };
-      golang = { symbol = ""; format = "[$symbol $version](cyan) "; };
-      php = { symbol = ""; format = "[$symbol $version](purple) "; };
+      nodejs = {
+        symbol = "";
+        format = "[$symbol $version](green) ";
+      };
+      rust = {
+        symbol = "";
+        format = "[$symbol $version](red) ";
+      };
+      golang = {
+        symbol = "";
+        format = "[$symbol $version](cyan) ";
+      };
+      php = {
+        symbol = "";
+        format = "[$symbol $version](purple) ";
+      };
 
       character = {
         success_symbol = "[❯](green)";
