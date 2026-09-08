@@ -18,12 +18,14 @@ The private input is fetched over https using `gh`'s git credential helper, so r
 
 The flake defines one configuration per machine:
 
-| Host | Extra module |
-| --- | --- |
-| `personal` | `hosts/personal.nix` |
-| `work` | `hosts/work.nix` |
+| Host | Extra system module | Extra Home Manager module |
+| --- | --- | --- |
+| `personal` | `hosts/personal.nix` | - |
+| `work` | `hosts/work.nix` | `modules/home/work.nix` |
 
-Everything both machines share lives in `hosts/common.nix`. A host module adds only what must not reach the other machine - `hosts/work.nix` adds Microsoft Teams, Webex, and openconnect.
+Everything both machines share lives in `hosts/common.nix`. A host module adds only what must not reach the other machine - `hosts/work.nix` adds Microsoft Teams, Webex, Signal, and openconnect.
+
+The same split applies to the user environment. `home.nix` imports `modules/home/work.nix` only for the work host, which is where corporate-only shell tooling lives: the `vpn` alias and the `jwp` Jenkins workspace helper. Neither is defined on the personal machine.
 
 The macOS account each host builds for comes from the private `dotfiles-private` flake input, so no account name appears in this repository. Evaluation still stays pure, because a flake input is fetched like any other dependency; only the input's URL and revision are recorded in `flake.lock`.
 
@@ -96,7 +98,7 @@ nix develop .#ci --command statix check .
 nix develop .#ci --command deadnix --fail $(git ls-files '*.nix')
 nix develop .#ci --command stylua --check $(git ls-files '*.lua')
 nix develop .#ci --command luacheck $(git ls-files '*.lua')
-nix develop .#ci --command shellcheck -x bootstrap.sh rebuild.sh check-skhd.sh vpn.sh host.sh
+nix develop .#ci --command shellcheck -x bootstrap.sh rebuild.sh check-skhd.sh vpn.sh host.sh jenkins-work-pull.sh
 ```
 
 Nix files are formatted with `nixfmt` and Lua with `stylua`; both are enforced, so run them without `--check` to fix. `statix`'s `repeated_keys` rule is disabled in `statix.toml` because it conflicts with the dotted-option style nix-darwin and Home Manager use.
@@ -207,6 +209,7 @@ also repairs DNS after openconnect has already died on its own.
 | `modules/home/development.nix` | Editor, language servers, agent, and Herdr integration |
 | `modules/home/desktop.nix` | Terminal, window manager, shortcuts, status bar, and launch agents |
 | `modules/home/ssh.nix` | SSH client configuration |
+| `modules/home/work.nix` | Work-only shell tooling (`vpn`, `jwp`) |
 | `modules/home/zen.nix` | Zen preferences and extension management |
 | `home/` | Configuration linked into the user home directory |
 | `patches/` | Checked patches for pinned upstream sources |
@@ -214,7 +217,8 @@ also repairs DNS after openconnect has already died on its own.
 | `bootstrap.sh` | First installation |
 | `rebuild.sh` | Subsequent system activation |
 | `check-skhd.sh` | skhd health and permission check |
-| `vpn.sh` | GlobalProtect VPN client over openconnect |
+| `vpn.sh` | GlobalProtect VPN client over openconnect (work host only) |
+| `jenkins-work-pull.sh` | Jenkins workspace refresh behind `jwp` (work host only) |
 | `statix.toml`, `.stylua.toml`, `.luacheckrc` | Linter configuration |
 
 ## Operational notes

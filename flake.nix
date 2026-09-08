@@ -50,6 +50,7 @@
       };
 
       mkHost =
+        host:
         { user, module }:
         nix-darwin.lib.darwinSystem {
           specialArgs = { inherit user private; };
@@ -64,6 +65,7 @@
               home-manager.backupFileExtension = "backup";
               home-manager.extraSpecialArgs = {
                 inherit
+                  host
                   user
                   firefox-addons
                   simpleBar
@@ -103,7 +105,7 @@
         };
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_name: mkHost) hosts;
+      darwinConfigurations = builtins.mapAttrs mkHost hosts;
 
       # Lets host.sh resolve an account to a host without any account name
       # living in this repository.

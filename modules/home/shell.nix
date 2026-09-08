@@ -45,7 +45,6 @@
       glog = ''PAGER="less -F -X" git log'';
       gadog = ''PAGER="less -F -X" git log --all --decorate --oneline --graph'';
       cc = "claude --dangerously-skip-permissions";
-      vpn = "$HOME/.dotfiles/vpn.sh";
       co = "codex --full-auto";
       cx = "codex --dangerously-bypass-approvals-and-sandbox";
       c = "clear";
@@ -133,22 +132,6 @@
       source "${pkgs.zsh-history-substring-search}/share/zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh"
       source "${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
       source "${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
-
-      # jwp - jenkins work pull. Refreshes every repo in the jenkins-git
-      # workspace, then drops you in the jenkins-setup root. It is a function
-      # rather than an alias to a script because a script runs in a subshell and
-      # cannot change the directory of the shell that called it.
-      export JENKINS_WORK_ROOT="$HOME/Documents/cargo-partner/jenkins-git"
-      jwp() {
-        "$HOME/.dotfiles/jenkins-work-pull.sh" "$@"
-        local rc=$?
-        cd "$JENKINS_WORK_ROOT/jenkins-setup" 2>/dev/null || {
-          print -u2 "jwp: could not cd to $JENKINS_WORK_ROOT/jenkins-setup"
-          return 1
-        }
-        print -P "%B-> $PWD%b"
-        return $rc
-      }
 
       function zvm_after_init() {
         bindkey '^[[A' history-substring-search-up

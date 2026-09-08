@@ -30,7 +30,7 @@ jobs:
 
       - name: shell scripts
         run: |
-          scripts=(bootstrap.sh rebuild.sh check-skhd.sh vpn.sh host.sh)
+          scripts=(bootstrap.sh rebuild.sh check-skhd.sh vpn.sh host.sh jenkins-work-pull.sh)
           nix develop .#ci --no-write-lock-file --command shellcheck -x "${scripts[@]}"
           nix develop .#ci --no-write-lock-file --command bash -n "${scripts[@]}"
 
