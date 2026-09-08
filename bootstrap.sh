@@ -46,7 +46,10 @@ else
     if [ -z "$mp" ] || [ "$mp" = "Not Mounted" ]; then
       echo "    found unmounted 'Nix Store' volume: $vol"
       diskutil info "$vol" | sed -nE '/Device Identifier|Volume Name|Disk Size|APFS Volume Disk/p'
-      read -r -p "    Permanently delete this stale volume? [y/N] " REPLY
+      # The while loop's stdin is the process-substitution pipe below, not the
+      # terminal, so this read must go to /dev/tty explicitly or it hits EOF
+      # immediately and (with set -e) silently kills the script.
+      read -r -p "    Permanently delete this stale volume? [y/N] " REPLY </dev/tty
       if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
         sudo diskutil apfs deleteVolume "$vol"
       else
@@ -91,6 +94,13 @@ fi
 echo "    .env is configured for \"$REAL_USER\""
 echo "    Fill in the remaining values in .env before using rcc or vpn."
 
+# Pick up DOTFILES_WORK_MACHINE (and anything else already filled in) so it
+# can be passed through to sudo below, which otherwise scrubs it.
+set -a
+# shellcheck disable=SC1091 # path is derived at runtime, not checkable here
+. "$DIR/.env"
+set +a
+
 NIX_BIN="$(command -v nix)"
 
 echo "==> Step 5: pre-fetch flake inputs as $REAL_USER"
@@ -98,7 +108,7 @@ GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
   "$NIX_BIN" flake archive ~/.dotfiles
 
 echo "==> Step 6: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
-sudo DOTFILES_USER="$REAL_USER" \
+sudo DOTFILES_USER="$REAL_USER" DOTFILES_WORK_MACHINE="${DOTFILES_WORK_MACHINE:-false}" \
   "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
   switch --flake ~/.dotfiles#mac --impure
 
@@ -110,7 +120,7 @@ if [ -d "/Applications/Zen.app" ]; then
     open -a Zen
     read -r -p "    Once Zen has fully started, quit it completely, then press Enter to continue... " _
     echo "    Re-running darwin-rebuild switch so the extensions land in the new profile"
-    sudo DOTFILES_USER="$REAL_USER" \
+    sudo DOTFILES_USER="$REAL_USER" DOTFILES_WORK_MACHINE="${DOTFILES_WORK_MACHINE:-false}" \
       "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
       switch --flake ~/.dotfiles#mac --impure
   fi

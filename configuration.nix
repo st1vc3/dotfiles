@@ -1,4 +1,4 @@
-{ user, wallpaper, ... }:
+{ user, wallpaper, workMachine, lib, ... }:
 
 {
   nix.enable = false;
@@ -100,11 +100,12 @@
       "nikitabobko/tap/aerospace"
       "telegram"
       "whatsapp"
-      "webex"
-      "microsoft-teams"
       "font-hack-nerd-font"
       "desktoppr"
       "tailscale-app"
+    ] ++ lib.optionals workMachine [
+      "webex"
+      "microsoft-teams"
     ];
   };
 

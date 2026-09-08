@@ -21,7 +21,7 @@ fi
 
 nix flake archive ~/.dotfiles
 
-sudo DOTFILES_USER="${DOTFILES_USER:-}" \
+sudo DOTFILES_USER="${DOTFILES_USER:-}" DOTFILES_WORK_MACHINE="${DOTFILES_WORK_MACHINE:-false}" \
   darwin-rebuild switch --flake ~/.dotfiles#mac --impure
 
 "$DIR/check-skhd.sh"

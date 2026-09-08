@@ -28,12 +28,13 @@
       # in CI, sees an empty string and falls back to the personal account.
       envUser = builtins.getEnv "DOTFILES_USER";
       user = if envUser != "" then envUser else "stivce";
+      workMachine = builtins.getEnv "DOTFILES_WORK_MACHINE" == "true";
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
     in
     {
       darwinConfigurations."mac" = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit user wallpaper; };
+        specialArgs = { inherit user wallpaper workMachine; };
         modules = [
           ./configuration.nix
           nix-homebrew.darwinModules.nix-homebrew

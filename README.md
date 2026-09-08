@@ -53,6 +53,7 @@ never reach the repository. Copy `.env.example` to `.env` and fill it in;
 | Variable | Used by |
 | --- | --- |
 | `DOTFILES_USER` | The account `flake.nix` builds for |
+| `DOTFILES_WORK_MACHINE` | `true` installs work-only casks (Teams, Webex); `false` (default) skips them |
 | `HERDR_REMOTE` | SSH target for the `rcc` remote Herdr session |
 | `VPN_PORTAL` | GlobalProtect portal hostname for `vpn.sh` |
 | `VPN_USER` | Account `vpn.sh` authenticates as |
