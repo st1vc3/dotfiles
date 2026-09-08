@@ -35,7 +35,15 @@
 
   # rebuild.sh, vpn.sh and the generation helpers all shell out to sudo, so
   # authenticate them with the fingerprint reader instead of a password.
-  security.pam.services.sudo_local.touchIdAuth = true;
+  #
+  # Herdr runs a persistent server that outlives the session that started it,
+  # so its panes can inherit a stale bootstrap namespace. pam_tid can only
+  # reach the sensor from the live one, and without the reattach it fails
+  # closed - sudo drops back to a password prompt with no explanation.
+  security.pam.services.sudo_local = {
+    touchIdAuth = true;
+    reattach = true;
+  };
 
   services.skhd.enable = true;
   nix-homebrew = {
