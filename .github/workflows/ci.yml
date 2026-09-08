@@ -8,44 +8,52 @@ on:
 permissions:
   contents: read
 
-jobs:
-  shellcheck:
-    name: shellcheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: validate shell scripts
-        run: |
-          shellcheck bootstrap.sh rebuild.sh check-skhd.sh vpn.sh
-          bash -n bootstrap.sh rebuild.sh check-skhd.sh vpn.sh
+# A newer push to the same ref makes an in-flight run pointless, and the darwin
+# job burns macOS runner minutes at 10x, so cancel superseded runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-  flake:
-    name: configuration + full build
-    runs-on: macos-latest
+# The default shell is `bash -e`; naming it explicitly adds `-o pipefail`.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Everything that does not need macOS runs here, at 1x billing.
+  lint:
+    name: lint + neovim
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25
 
-      - name: nix flake check
-        run: >
-          nix flake check --no-build --no-write-lock-file
-          --override-input wallpaper path:./.github/wallpaper-stub
-
-      - name: build the darwin system
-        run: >
-          nix build .#darwinConfigurations.mac.system --no-link --no-write-lock-file
-          --override-input wallpaper path:./.github/wallpaper-stub
-
-      - name: validate configuration files
+      - name: shell scripts
         run: |
-          nix develop .#ci --no-write-lock-file \
-            --override-input wallpaper path:./.github/wallpaper-stub \
-            --command bash -euo pipefail -c '
-              actionlint
-              git ls-files -z "*.json" | xargs -0 jq empty
-              jq empty home/.simplebarrc
-              taplo lint home/.config/aerospace/aerospace.toml home/.config/herdr/config.toml
-            '
+          scripts=(bootstrap.sh rebuild.sh check-skhd.sh vpn.sh host.sh)
+          nix develop .#ci --no-write-lock-file --command shellcheck -x "${scripts[@]}"
+          nix develop .#ci --no-write-lock-file --command bash -n "${scripts[@]}"
+
+      - name: nix
+        run: |
+          mapfile -t files < <(git ls-files '*.nix')
+          nix develop .#ci --no-write-lock-file --command nixfmt --check "${files[@]}"
+          nix develop .#ci --no-write-lock-file --command statix check .
+          nix develop .#ci --no-write-lock-file --command deadnix --fail "${files[@]}"
+
+      - name: lua
+        run: |
+          mapfile -t files < <(git ls-files '*.lua')
+          nix develop .#ci --no-write-lock-file --command stylua --check "${files[@]}"
+          nix develop .#ci --no-write-lock-file --command luacheck "${files[@]}"
+
+      - name: workflows and data files
+        run: |
+          mapfile -t json < <(git ls-files '*.json')
+          nix develop .#ci --no-write-lock-file --command actionlint
+          nix develop .#ci --no-write-lock-file --command jq empty "${json[@]}" home/.simplebarrc
+          nix develop .#ci --no-write-lock-file --command taplo lint \
+            home/.config/aerospace/aerospace.toml home/.config/herdr/config.toml
 
       - name: start Neovim with the locked plugins
         env:
@@ -55,24 +63,35 @@ jobs:
           GIT_CONFIG_GLOBAL: /dev/null
         run: |
           if ! nix develop .#ci --no-write-lock-file \
-              --override-input wallpaper path:./.github/wallpaper-stub \
               --command nvim --headless -i NONE "+Lazy! restore" +qa \
               >"$RUNNER_TEMP/nvim-install.log" 2>&1; then
             cat "$RUNNER_TEMP/nvim-install.log"
             exit 1
           fi
-          nix develop .#ci --no-write-lock-file \
-            --override-input wallpaper path:./.github/wallpaper-stub \
-            --command nvim --headless -i NONE +qa
+          nix develop .#ci --no-write-lock-file --command nvim --headless -i NONE +qa
 
       - name: verify repository invariants
         run: |
           git check-ignore --no-index .no-mistakes/example
           test "$(git ls-files 'home/.config/herdr/*')" = "home/.config/herdr/config.toml"
-          git check-ignore --no-index \
-            home/.config/herdr/example.log \
-            home/.config/herdr/example.sock \
-            home/.config/herdr/session.json \
-            home/.config/herdr/.plugins.lock \
-            home/.config/herdr/release-notes.json
           git diff --exit-code
+
+  # Only the darwin system build genuinely needs a macOS runner.
+  darwin:
+    name: build both hosts
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25
+
+      - name: nix flake check
+        run: >
+          nix flake check --no-build --no-write-lock-file
+          --override-input private path:./.github/private-stub
+
+      - name: build the darwin systems
+        run: >
+          nix build --no-link --no-write-lock-file
+          --override-input private path:./.github/private-stub
+          .#darwinConfigurations.personal.system
+          .#darwinConfigurations.work.system

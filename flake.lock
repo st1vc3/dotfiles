@@ -115,6 +115,21 @@
         "type": "github"
       }
     },
+    "private": {
+      "locked": {
+        "lastModified": 1787741292,
+        "narHash": "sha256-JVKcL+RM0LbmSaVcFxG8PvI5zETeerFAsaJjhZV2NH4=",
+        "ref": "refs/heads/main",
+        "rev": "fba39a204bace1202a9374ff46d1b3b1977b6ecf",
+        "revCount": 6,
+        "type": "git",
+        "url": "https://github.com/st1vc3/dotfiles-private.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/st1vc3/dotfiles-private.git"
+      }
+    },
     "root": {
       "inputs": {
         "firefox-addons": "firefox-addons",
@@ -122,8 +137,8 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
-        "simpleBar": "simpleBar",
-        "wallpaper": "wallpaper"
+        "private": "private",
+        "simpleBar": "simpleBar"
       }
     },
     "simpleBar": {
@@ -140,22 +155,6 @@
         "owner": "Jean-Tinland",
         "repo": "simple-bar",
         "type": "github"
-      }
-    },
-    "wallpaper": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783940248,
-        "narHash": "sha256-UDRizQ8ZHFDVYWI5dMei8X1l0U42oNxfbg5VYUdaxXQ=",
-        "ref": "refs/heads/main",
-        "rev": "4407fdaf3b5f60a9d2a21aa6d558987000333449",
-        "revCount": 2,
-        "type": "git",
-        "url": "ssh://git@github.com/st1vc3/wallpaper.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/st1vc3/wallpaper.git"
       }
     }
   },

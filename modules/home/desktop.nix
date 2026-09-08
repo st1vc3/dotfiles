@@ -1,4 +1,11 @@
-{ config, lib, pkgs, simpleBar, wallpaper, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  simpleBar,
+  private,
+  ...
+}:
 
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
@@ -7,40 +14,40 @@ let
   # sample and renders non-deterministically. Bake a blurred copy of the
   # wallpaper instead and let the bar composite it. Heavy blur is all low
   # frequency, so a small downscaled JPEG upscales cleanly and stays tiny.
-  wallpaperBlur = pkgs.runCommand "simple-bar-wallpaper-blur.jpg"
-    { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
-    magick ${wallpaper}/abstract/red.png -resize 900x -blur 0x18 -quality 82 $out
-  '';
+  wallpaperBlur =
+    pkgs.runCommand "simple-bar-wallpaper-blur.jpg" { nativeBuildInputs = [ pkgs.imagemagick ]; }
+      ''
+        magick ${private}/abstract/red.jpg -resize 900x -blur 0x18 -quality 82 $out
+      '';
   simpleBarWithNetworkAddress = pkgs.runCommand "simple-bar-with-network-address" { } ''
     cp -R ${simpleBar} $out
     chmod -R u+w $out
     patch --directory=$out --strip=1 --fuzz=0 < ${../../patches/simple-bar-network-address.patch}
     cp ${wallpaperBlur} $out/wallpaper-blur.jpg
   '';
-  uebersichtWidgetSettings = pkgs.writeText "uebersicht-widget-settings.json" (builtins.toJSON {
-    "GettingStarted-jsx" = {
-      hidden = true;
-      screens = [ ];
-      showOnAllScreens = true;
-      showOnMainScreen = false;
-      showOnSelectedScreens = false;
-    };
-    "simple-bar-index-jsx" = {
-      hidden = false;
-      screens = [ ];
-      showOnAllScreens = true;
-      showOnMainScreen = false;
-      showOnSelectedScreens = false;
-    };
-  });
-  reloadUbersicht = pkgs.writeShellScript "reload-uebersicht" ''
-    /usr/bin/pkill -TERM -f '/Applications/.*bersicht.app/Contents/' || true
-    attempt=0
-    while /usr/bin/pgrep -f '/Applications/.*bersicht.app/Contents/' >/dev/null && [ "$attempt" -lt 10 ]; do
-      /bin/sleep 1
-      attempt=$((attempt + 1))
-    done
-
+  uebersichtWidgetSettings = pkgs.writeText "uebersicht-widget-settings.json" (
+    builtins.toJSON {
+      "GettingStarted-jsx" = {
+        hidden = true;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+      "simple-bar-index-jsx" = {
+        hidden = false;
+        screens = [ ];
+        showOnAllScreens = true;
+        showOnMainScreen = false;
+        showOnSelectedScreens = false;
+      };
+    }
+  );
+  ubersichtProcess = "/Applications/.*bersicht.app/Contents/";
+  # Starts Übersicht and waits until Simple Bar actually answers, rather than
+  # sleeping a fixed interval and hoping. Both the login agent and the
+  # rebuild-time reload go through this, so they wait identically.
+  startUbersicht = pkgs.writeShellScript "start-uebersicht" ''
     /usr/bin/open -g -b tracesOf.Uebersicht
     attempt=0
     until /usr/bin/osascript -e 'tell application id "tracesOf.Uebersicht" to refresh widget id "simple-bar-index-jsx"' >/dev/null 2>&1; do
@@ -51,6 +58,18 @@ let
       fi
       /bin/sleep 1
     done
+  '';
+  # Activation has to restart Übersicht so the widget picks up its new store
+  # path; login only needs the start half above.
+  reloadUbersicht = pkgs.writeShellScript "reload-uebersicht" ''
+    /usr/bin/pkill -TERM -f '${ubersichtProcess}' || true
+    attempt=0
+    while /usr/bin/pgrep -f '${ubersichtProcess}' >/dev/null && [ "$attempt" -lt 10 ]; do
+      /bin/sleep 1
+      attempt=$((attempt + 1))
+    done
+
+    exec ${startUbersicht}
   '';
 in
 {
@@ -84,7 +103,8 @@ in
 
   home.file.".simplebarrc".source = ../../home/.simplebarrc;
 
-  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source = simpleBarWithNetworkAddress;
+  home.file."Library/Application Support/Übersicht/widgets/simple-bar".source =
+    simpleBarWithNetworkAddress;
 
   # Ubersicht rewrites WidgetSettings.json at runtime, so it cannot be a
   # read-only store symlink: the app silently fails to persist widget state and
@@ -104,11 +124,7 @@ in
   launchd.agents.uebersicht = {
     enable = true;
     config = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "/usr/bin/open -g /Applications/Übersicht.app; /bin/sleep 2; /usr/bin/osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'"
-      ];
+      ProgramArguments = [ "${startUbersicht}" ];
       RunAtLoad = true;
     };
   };

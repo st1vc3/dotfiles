@@ -1,0 +1,7 @@
+# repeated_keys fires on the dominant nix-darwin and Home Manager idiom -
+# `dock.autohide`, `finder.NewWindowTarget`, `home.file."...".source` - where
+# writing each option on its own dotted line is what upstream documentation and
+# every module in this repository does. Collapsing those into nested attribute
+# sets to satisfy the lint would make the configuration harder to read and
+# harder to diff, so the rule is off rather than worked around.
+disabled = ["repeated_keys"]

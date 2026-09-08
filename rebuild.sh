@@ -2,6 +2,8 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=host.sh
+. "$DIR/host.sh"
 
 if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
   echo "Error: ~/.dotfiles exists and is not a symbolic link. Move it, then rerun rebuild.sh." >&2
@@ -9,19 +11,11 @@ if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
 fi
 ln -sfn "$DIR" "$HOME/.dotfiles"
 
-# The account name is machine-specific and lives in the untracked .env, so the
-# flake reads it from the environment. That makes evaluation impure, and sudo
-# scrubs the environment, so the value is passed through explicitly.
-if [ -r "$DIR/.env" ]; then
-  set -a
-  # shellcheck disable=SC1091 # path is derived at runtime, not checkable here
-  . "$DIR/.env"
-  set +a
-fi
+HOST="$(resolve_host "${1:-}")"
+echo "==> Building host '$HOST'"
 
-nix flake archive ~/.dotfiles
+nix flake archive "$HOME/.dotfiles"
 
-sudo DOTFILES_USER="${DOTFILES_USER:-}" \
-  darwin-rebuild switch --flake ~/.dotfiles#mac --impure
+sudo darwin-rebuild switch --flake "$HOME/.dotfiles#$HOST"
 
 "$DIR/check-skhd.sh"

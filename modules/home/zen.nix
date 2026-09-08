@@ -1,10 +1,18 @@
-{ lib, pkgs, firefox-addons, ... }:
+{
+  lib,
+  pkgs,
+  firefox-addons,
+  ...
+}:
 
 let
   zenAddons = firefox-addons.packages.${pkgs.stdenv.hostPlatform.system};
   zenExtensions = pkgs.symlinkJoin {
     name = "zen-extensions";
-    paths = [ zenAddons.ublock-origin zenAddons.sponsorblock ];
+    paths = [
+      zenAddons.ublock-origin
+      zenAddons.sponsorblock
+    ];
   };
   zenExtensionManifest = pkgs.runCommand "zen-extension-manifest" { } ''
     find "${zenExtensions}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}" \

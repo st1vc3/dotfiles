@@ -2,9 +2,17 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=host.sh
+. "$DIR/host.sh"
+
 NIX_INSTALLER_VERSION="v3.21.0"
 NIX_INSTALLER_SHA256="c3cf066a28941e89fa1e38ed36f2acfc7479f9b088ddcf35160362a5ee89bd43"
 NIX_INSTALLER_TMP=""
+BOOTSTRAP_GITCONFIG=""
+
+REAL_USER="$(id -un)"
+REQUESTED_HOST="${1:-}"
+echo "==> Bootstrapping for account '$REAL_USER'"
 
 echo "==> Requesting sudo access up front"
 sudo -v
@@ -15,6 +23,9 @@ cleanup() {
   kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
   if [ -n "$NIX_INSTALLER_TMP" ]; then
     rm -f "$NIX_INSTALLER_TMP"
+  fi
+  if [ -n "$BOOTSTRAP_GITCONFIG" ]; then
+    rm -f "$BOOTSTRAP_GITCONFIG"
   fi
 }
 trap cleanup EXIT
@@ -74,33 +85,48 @@ if [ -e "$HOME/.dotfiles" ] && [ ! -L "$HOME/.dotfiles" ]; then
 fi
 ln -sfn "$DIR" "$HOME/.dotfiles"
 
-echo "==> Step 4: record the account name in .env"
-REAL_USER="$(whoami)"
-# The account name goes in the untracked .env, never into a tracked file, so a
-# machine-specific account never reaches the repository.
+echo "==> Step 4: local configuration"
+# The account name is baked into flake.nix per host, so .env only carries the
+# remote host and VPN details, which are not needed to build the system.
 if [ ! -e "$DIR/.env" ]; then
   cp "$DIR/.env.example" "$DIR/.env"
   chmod 600 "$DIR/.env"
   echo "    Created .env from .env.example"
-fi
-if grep -qE '^DOTFILES_USER=' "$DIR/.env"; then
-  sed -i '' -E "s/^DOTFILES_USER=.*/DOTFILES_USER=${REAL_USER}/" "$DIR/.env"
 else
-  printf 'DOTFILES_USER=%s\n' "$REAL_USER" >>"$DIR/.env"
+  echo "    .env already exists, leaving it alone"
 fi
-echo "    .env is configured for \"$REAL_USER\""
-echo "    Fill in the remaining values in .env before using rcc or vpn."
+echo "    Fill in the values in .env before using rcc or vpn."
 
 NIX_BIN="$(command -v nix)"
 
 echo "==> Step 5: pre-fetch flake inputs as $REAL_USER"
-GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
-  "$NIX_BIN" flake archive ~/.dotfiles
+# The private input is fetched over https through gh's git credential helper.
+# On a fresh machine neither gh nor that helper exists yet - gh arrives with
+# Homebrew in step 6, and the helper with Home Manager. So both are supplied
+# just for this step: a throwaway gh from nixpkgs, and a throwaway git config
+# that nothing outside this command ever sees. Writing the helper into the
+# real git config instead would collide with the one Home Manager manages.
+BOOTSTRAP_GITCONFIG="$(mktemp -t dotfiles-bootstrap-gitconfig.XXXXXX)"
+printf '[credential]\n\thelper = !gh auth git-credential\n' >"$BOOTSTRAP_GITCONFIG"
+# $1 and $2 are positional parameters of the inner shell, not of this one, so
+# they must stay unexpanded here.
+# shellcheck disable=SC2016
+"$NIX_BIN" shell nixpkgs#gh --command bash -euo pipefail -c '
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "    GitHub login required to read the private flake input"
+    gh auth login
+  fi
+  GIT_CONFIG_GLOBAL="$1" nix flake archive "$2"
+' bash "$BOOTSTRAP_GITCONFIG" "$HOME/.dotfiles"
+
+# Only now that nix exists and the inputs are local can the flake say which
+# host this account belongs to.
+HOST="$(resolve_host "$REQUESTED_HOST")"
+echo "    building host '$HOST'"
 
 echo "==> Step 6: first darwin-rebuild switch (pinned to nix-darwin-26.05)"
-sudo DOTFILES_USER="$REAL_USER" \
-  "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
-  switch --flake ~/.dotfiles#mac --impure
+sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+  switch --flake "$HOME/.dotfiles#$HOST"
 
 echo "==> Step 7: Zen browser profile"
 if [ -d "/Applications/Zen.app" ]; then
@@ -110,9 +136,8 @@ if [ -d "/Applications/Zen.app" ]; then
     open -a Zen
     read -r -p "    Once Zen has fully started, quit it completely, then press Enter to continue... " _
     echo "    Re-running darwin-rebuild switch so the extensions land in the new profile"
-    sudo DOTFILES_USER="$REAL_USER" \
-      "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
-      switch --flake ~/.dotfiles#mac --impure
+    sudo "$NIX_BIN" run github:nix-darwin/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+      switch --flake "$HOME/.dotfiles#$HOST"
   fi
 else
   echo "    Zen not installed, skipping"

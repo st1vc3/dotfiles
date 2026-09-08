@@ -1,0 +1,6 @@
+# Matches the existing style of the checked-in Lua: two-space indents and
+# single-quoted strings.
+indent_type = "Spaces"
+indent_width = 2
+quote_style = "AutoPreferSingle"
+column_width = 100

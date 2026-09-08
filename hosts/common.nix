@@ -1,4 +1,4 @@
-{ user, wallpaper, ... }:
+{ user, private, ... }:
 
 {
   nix.enable = false;
@@ -22,7 +22,7 @@
     dock.autohide = true;
     dock.autohide-time-modifier = 0.0;
     dock.orientation = "left";
-    dock.persistent-apps = [];
+    dock.persistent-apps = [ ];
     dock.show-recents = false;
     dock.persistent-others = [
       { folder = "/Users/${user}/Downloads"; }
@@ -32,6 +32,11 @@
     finder.NewWindowTarget = "Home";
     trackpad.Clicking = true;
   };
+
+  # rebuild.sh, vpn.sh and the generation helpers all shell out to sudo, so
+  # authenticate them with the fingerprint reader instead of a password.
+  security.pam.services.sudo_local.touchIdAuth = true;
+
   services.skhd.enable = true;
   nix-homebrew = {
     enable = true;
@@ -72,7 +77,6 @@
       "colima"
       "docker"
       "sshpass"
-      "openconnect"
       "wget"
     ];
     casks = [
@@ -100,17 +104,31 @@
       "nikitabobko/tap/aerospace"
       "telegram"
       "whatsapp"
-      "webex"
-      "microsoft-teams"
       "font-hack-nerd-font"
       "desktoppr"
       "tailscale-app"
     ];
   };
 
+  # desktoppr is a cask, so on a first run it may not exist yet when this
+  # fires. Setting the wallpaper is cosmetic - never fail activation over it.
+  #
+  # Reading the current wallpaper first keeps this idempotent: without the
+  # check every rebuild re-applies the same image, which makes the desktop
+  # flash and briefly steals focus.
   system.activationScripts.postActivation.text = ''
-    uid=$(id -u ${user})
-    launchctl asuser "$uid" sudo -u ${user} /usr/local/bin/desktoppr "${wallpaper}/abstract/red.png" \
-      || echo "warning: desktoppr failed, wallpaper not set" >&2
+    desktoppr=/usr/local/bin/desktoppr
+    wallpaperPath="${private}/abstract/red.jpg"
+    if [ ! -x "$desktoppr" ]; then
+      echo "warning: desktoppr not installed, wallpaper not set" >&2
+    else
+      uid=$(id -u ${user})
+      runAsUser() { launchctl asuser "$uid" sudo -u ${user} "$@"; }
+      current=$(runAsUser "$desktoppr" 2>/dev/null | head -n 1 || true)
+      if [ "$current" != "$wallpaperPath" ]; then
+        runAsUser "$desktoppr" "$wallpaperPath" \
+          || echo "warning: desktoppr failed, wallpaper not set" >&2
+      fi
+    fi
   '';
 }

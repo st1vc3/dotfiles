@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 {
   # `package` is left at its default of null so the system client stays in

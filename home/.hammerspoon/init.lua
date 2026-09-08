@@ -81,11 +81,10 @@ local sections = {
 }
 
 local function escapeHtml(value)
-  return value
-    :gsub('&', '&amp;')
-    :gsub('<', '&lt;')
-    :gsub('>', '&gt;')
-    :gsub('"', '&quot;')
+  -- Parenthesised so only the escaped string is returned. gsub also returns a
+  -- match count, which would otherwise leak out as a second return value and
+  -- land in whatever the caller passes this to.
+  return (value:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;'):gsub('"', '&quot;'))
 end
 
 local function renderSections()
@@ -93,17 +92,23 @@ local function renderSections()
   for _, section in ipairs(sections) do
     local rows = {}
     for _, shortcut in ipairs(section.shortcuts) do
-      table.insert(rows, string.format(
-        '<div class="row"><kbd>%s</kbd><span>%s</span></div>',
-        escapeHtml(shortcut[1]),
-        escapeHtml(shortcut[2])
-      ))
+      table.insert(
+        rows,
+        string.format(
+          '<div class="row"><kbd>%s</kbd><span>%s</span></div>',
+          escapeHtml(shortcut[1]),
+          escapeHtml(shortcut[2])
+        )
+      )
     end
-    table.insert(output, string.format(
-      '<section><h2>%s</h2>%s</section>',
-      escapeHtml(section.title),
-      table.concat(rows)
-    ))
+    table.insert(
+      output,
+      string.format(
+        '<section><h2>%s</h2>%s</section>',
+        escapeHtml(section.title),
+        table.concat(rows)
+      )
+    )
   end
   return table.concat(output)
 end
@@ -203,17 +208,20 @@ end
 
 local function showOverlay()
   if not overlay then
-    overlay = hs.webview.new(overlayFrame(), {
-      javaScriptEnabled = false,
-      javaScriptCanOpenWindowsAutomatically = false,
-      privateBrowsing = true,
-    })
+    overlay = hs.webview
+      .new(overlayFrame(), {
+        javaScriptEnabled = false,
+        javaScriptCanOpenWindowsAutomatically = false,
+        privateBrowsing = true,
+      })
       :windowStyle(0)
       :allowTextEntry(false)
       :allowGestures(false)
       :transparent(true)
       :shadow(false)
-      :html((html:gsub('{{SECTIONS}}', function() return renderSections() end)))
+      :html((html:gsub('{{SECTIONS}}', function()
+        return renderSections()
+      end)))
   else
     overlay:frame(overlayFrame())
   end
@@ -241,11 +249,13 @@ end
 shortcutOverlayHotkey = hs.hotkey.bind({ 'alt' }, 'escape', startHold, hideOverlay)
 shortcutOverlay = { show = showOverlay, hide = hideOverlay }
 
-configWatcher = hs.pathwatcher.new(hs.configdir, function(files)
-  for _, file in ipairs(files) do
-    if file:match('%.lua$') then
-      hs.reload()
-      return
+configWatcher = hs.pathwatcher
+  .new(hs.configdir, function(files)
+    for _, file in ipairs(files) do
+      if file:match('%.lua$') then
+        hs.reload()
+        return
+      end
     end
-  end
-end):start()
+  end)
+  :start()
